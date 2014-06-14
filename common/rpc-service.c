@@ -3773,4 +3773,8 @@ seafile_clean_up_repo_history (const char *repo_id, int keep_days, GError **erro
     return ret;
 }
 
+int seafile_authenticate_repo(const char* repo_id, const char* passwd, const char* magic, int enc_version, GError **error)
+{
+	return seafile_verify_repo_passwd(repo_id, passwd, magic, enc_version);
+}
 #endif  /* SEAFILE_SERVER */
