@@ -776,6 +776,7 @@ seafile_create_repo_cryptostick (const char *repo_name,
                                  const char *repo_desc,
                                  const char *owner_email,
                                  const char *public_key,
+                                 const char * pubkey_exponent,
                                  GError **error);
 
 char *

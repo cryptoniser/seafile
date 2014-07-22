@@ -2917,6 +2917,33 @@ seafile_create_repo (const char *repo_name,
                                                  repo_name, repo_desc,
                                                  owner_email,
                                                  passwd,
+                                                 NULL,
+                                                 NULL, 
+                                                 error);
+    return repo_id;
+}
+
+char *
+seafile_create_repo_cryptostick (const char *repo_name,
+                                 const char *repo_desc,
+                                 const char *owner_email,
+                                 const char *public_key,
+                                 const char *pubkey_exponent,
+                                 GError **error)
+{
+    if (!repo_name || !repo_desc || !owner_email) {
+        g_set_error (error, 0, SEAF_ERR_BAD_ARGS, "Argument should not be null");
+        return NULL;
+    }
+
+    char *repo_id;
+
+    repo_id = seaf_repo_manager_create_new_repo (seaf->repo_mgr,
+                                                 repo_name, repo_desc,
+                                                 owner_email,
+                                                 NULL, 
+                                                 public_key,
+                                                 pubkey_exponent,
                                                  error);
     return repo_id;
 }
