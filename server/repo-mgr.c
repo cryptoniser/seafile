@@ -2224,7 +2224,7 @@ create_repo_common (SeafRepoManager *mgr,
             memcpy (repo->random_key, random_key, 96);
         } else {
             memcpy (repo->hashed_public_key, hashed_public_key, 64);
-            memcpy (repo->cs_random_key, random_key, 256);
+            memcpy (repo->cs_random_key, random_key, 512);
         }
     }
 
