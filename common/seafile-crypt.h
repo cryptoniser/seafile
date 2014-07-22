@@ -72,7 +72,7 @@ seafile_generate_magic (int version, const char *repo_id,
                         const char *passwd, char *magic);
 
 void
-seafile_hash_public_key(char *public_key, char hashed_public_key[32]);
+seafile_hash_public_key(char *public_key, char hashed_public_key[65]);
 
 int
 seafile_verify_repo_passwd (const char *repo_id,

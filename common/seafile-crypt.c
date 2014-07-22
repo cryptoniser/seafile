@@ -179,13 +179,19 @@ seafile_generate_magic (int version, const char *repo_id,
 }
 
 void
-seafile_hash_public_key(char *public_key, char hashed_public_key[32])
+seafile_hash_public_key(char *public_key, char hashed_public_key[65])
 {
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
     SHA256_Update(&sha256, public_key, strlen(public_key));
-    SHA256_Final(hashed_public_key, &sha256);   
+    SHA256_Final(hash, &sha256);
+
+    int i;
+    for(i=0; i<SHA256_DIGEST_LENGTH; i++) {
+        sprintf((char*)(hashed_public_key + i*2), "%02x", hash[i]);
+    }
+    hashed_public_key[64]='\0';
 }
 
 int

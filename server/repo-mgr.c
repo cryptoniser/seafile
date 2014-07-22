@@ -2295,7 +2295,7 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
 
     repo_id = gen_uuid ();
 
-    char hashed_public_key[32];
+    char hashed_public_key[65];
     char cs_random_key[513];
 
     // Cryptostick
@@ -2304,8 +2304,8 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
         seafile_hash_public_key (public_key, hashed_public_key);
         // Generate random_key
         seafile_cryptostick_generate_random_key(public_key, public_key_exponent, cs_random_key);
-//        g_set_error(error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,"cs_random_key = %s, public_key = %s, public_key_exp = %s", 
-//                                                                cs_random_key, public_key, public_key_exponent);
+//        g_set_error(error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,"cs_random_key = %s, public_key = %s, public_key_exp = %s, hashed_public_key = %s", 
+//                                                                cs_random_key, public_key, public_key_exponent, hashed_public_key);
     } else {
         if (passwd && passwd[0] != 0) {
             seafile_generate_magic (2, repo_id, passwd, magic);
