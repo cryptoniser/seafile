@@ -4,6 +4,9 @@
 #include <glib.h>
 #include "seafile-crypt.h"
 #include <openssl/rand.h>
+#include <openssl/sha.h>
+#include <openssl/rsa.h>
+#include <openssl/err.h>
 
 #include "utils.h"
 #include "log.h"
@@ -98,6 +101,64 @@ seafile_generate_random_key (const char *passwd, char *random_key)
     g_free (rand_key);
 }
 
+int
+seafile_cryptostick_generate_random_key (const char *modulus, 
+                    const char* exponent, char* random_key)
+{
+    int r,i;
+    unsigned char secret_key[32];
+
+    if (!RAND_bytes (secret_key, sizeof(secret_key))) {
+        seaf_warning ("Failed to generate secret key for repo encryption "
+                      "with RAND_bytes(), use RAND_pseudo_bytes().\n");
+        RAND_pseudo_bytes (secret_key, sizeof(secret_key));
+    }
+
+    // Get public key
+/*    unsigned char* modulus;
+    unsigned char* exponent;
+    size_t modlen, explen;
+    r = csGetPublicKey(card, &modulus, &modlen, &exponent, &explen);                                                                                                                             
+*/
+    RSA* rsa = NULL;
+    int encryptedLength = 256;
+    int modlen = 256;
+    unsigned char* n_hex;
+    unsigned char* e_hex;
+    
+/*
+    n_hex = (unsigned char*)malloc(sizeof(unsigned char*)*modlen*2);                                                                                                                             
+    for(i=0;i<modlen;i++)
+        sprintf((char*)(n_hex + (i * 2)), "%02x", modulus[i]);                                                                                                                                   
+*/
+/*
+    e_hex = (unsigned char*)malloc(sizeof(unsigned char*)*explen*2);                                                                                                                             
+    for(i=0;i<explen;i++)
+        sprintf((char*)(e_hex + (i * 2)), "%02x", exponent[i]);                                                                                                                                  
+*/    
+    ERR_load_crypto_strings();
+    rsa = RSA_new();
+
+    if(!BN_hex2bn(&rsa->n, (const char*)modulus)) {
+        seaf_warning("modulo parsing error\n");
+        return -1;
+    }
+
+    if (!BN_hex2bn(&rsa->e, (const char*)exponent)) {
+        seaf_warning("exponent parsing error\n");
+        return -1;
+    }
+    unsigned char random_key_raw[256];
+    int enc_length = RSA_public_encrypt(32, secret_key, random_key_raw, rsa, RSA_PKCS1_PADDING);                                                                                                           
+    seaf_warning("encrypted: \n");
+    for(i=0;i<encryptedLength;i++)    
+        seaf_warning("%.2x ", random_key_raw[i]);
+    seaf_warning("\n");
+
+    rawdata_to_hex (random_key_raw, random_key, 256);
+
+}
+
 void
 seafile_generate_magic (int version, const char *repo_id,
                         const char *passwd, char *magic)
@@ -115,6 +176,16 @@ seafile_generate_magic (int version, const char *repo_id,
 
     g_string_free (buf, TRUE);
     rawdata_to_hex (key, magic, 32);
+}
+
+void
+seafile_hash_public_key(char *public_key, char hashed_public_key[32])
+{
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, public_key, strlen(public_key));
+    SHA256_Final(hashed_public_key, &sha256);   
 }
 
 int

@@ -63,9 +63,16 @@ seafile_derive_key (const char *data_in, int in_len, int version,
 void
 seafile_generate_random_key (const char *passwd, char *random_key);
 
+int
+seafile_cryptostick_generate_random_key ( const char *exponent,
+                    const char*  modulus, char* random_key);
+
 void
 seafile_generate_magic (int version, const char *repo_id,
                         const char *passwd, char *magic);
+
+void
+seafile_hash_public_key(char *public_key, char hashed_public_key[32]);
 
 int
 seafile_verify_repo_passwd (const char *repo_id,
