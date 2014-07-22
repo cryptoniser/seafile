@@ -38,6 +38,11 @@ struct _SeafRepo {
     int         enc_version;
     gchar       magic[65];       /* hash(repo_id + passwd), key stretched. */
     gchar       random_key[97];
+
+    // Cryptostick
+    gchar       hashed_public_key[65];
+    gchar       cs_random_key[256];
+
     gboolean    no_local_history;
 
     SeafBranch *head;
@@ -390,6 +395,8 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
                                    const char *repo_desc,
                                    const char *owner_email,
                                    const char *passwd,
+                                   const char *public_key,
+                                   const char * public_key_exponent,
                                    GError **error);
 
 char *

@@ -2166,6 +2166,7 @@ create_repo_common (SeafRepoManager *mgr,
                     const char *repo_desc,
                     const char *user,
                     const char *magic,
+                    const char *hashed_public_key,
                     const char *random_key,
                     int enc_version,
                     GError **error)
@@ -2183,17 +2184,31 @@ create_repo_common (SeafRepoManager *mgr,
     }
 
     if (enc_version == 2) {
-        if (!magic || strlen(magic) != 64) {
-            seaf_warning ("Bad magic.\n");
-            g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
-                         "Bad magic");
-            return -1;
-        }
-        if (!random_key || strlen(random_key) != 96) {
-            seaf_warning ("Bad random key.\n");
-            g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
-                         "Bad random key");
-            return -1;
+        if (!hashed_public_key) {
+            if (!magic || strlen(magic) != 64) {
+                seaf_warning ("Bad magic.\n");
+                g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
+                             "Bad magic");
+                return -1;
+            }
+            if (!random_key || strlen(random_key) != 96) {
+                seaf_warning ("Bad random key.\n");
+                g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
+                             "Bad random key");
+                return -1;
+            }
+        } else { // Cryptostick
+            if (!random_key || strlen(random_key) != 512) {
+                if( random_key == NULL )
+                {
+                    g_set_error(error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "!random_key");
+                    return -1;
+                }
+                seaf_warning ("Bad random key (cryptostick).\n");
+                g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
+                             "Bad random key (cryptostick) length = %lu, key= %s", strlen(random_key), random_key);
+                return -1;
+            }
         }
     }
 
@@ -2203,8 +2218,14 @@ create_repo_common (SeafRepoManager *mgr,
     if (enc_version == 2) {
         repo->encrypted = TRUE;
         repo->enc_version = enc_version;
-        memcpy (repo->magic, magic, 64);
-        memcpy (repo->random_key, random_key, 96);
+
+        if (!hashed_public_key) {
+            memcpy (repo->magic, magic, 64);
+            memcpy (repo->random_key, random_key, 96);
+        } else {
+            memcpy (repo->hashed_public_key, hashed_public_key, 64);
+            memcpy (repo->cs_random_key, random_key, 256);
+        }
     }
 
     repo->version = CURRENT_REPO_VERSION;
@@ -2265,6 +2286,8 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
                                    const char *repo_desc,
                                    const char *owner_email,
                                    const char *passwd,
+                                   const char *public_key,
+                                   const char * public_key_exponent,
                                    GError **error)
 {
     char *repo_id = NULL;
@@ -2272,18 +2295,38 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
 
     repo_id = gen_uuid ();
 
-    if (passwd && passwd[0] != 0) {
-        seafile_generate_magic (2, repo_id, passwd, magic);
-        seafile_generate_random_key (passwd, random_key);
+    char hashed_public_key[32];
+    char cs_random_key[513];
+
+    // Cryptostick
+    if (public_key && public_key_exponent) {
+        // hash public key
+        seafile_hash_public_key (public_key, hashed_public_key);
+        // Generate random_key
+        seafile_cryptostick_generate_random_key(public_key, public_key_exponent, cs_random_key);
+//        g_set_error(error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,"cs_random_key = %s, public_key = %s, public_key_exp = %s", 
+//                                                                cs_random_key, public_key, public_key_exponent);
+    } else {
+        if (passwd && passwd[0] != 0) {
+            seafile_generate_magic (2, repo_id, passwd, magic);
+            seafile_generate_random_key (passwd, random_key);
+        }
     }
 
     int rc;
-    if (passwd)
+    if (public_key) {
         rc = create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
-                                 magic, random_key, CURRENT_ENC_VERSION, error);
-    else
-        rc = create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
-                                 NULL, NULL, -1, error);
+                                 NULL, hashed_public_key, cs_random_key, CURRENT_ENC_VERSION, error);
+    } else {
+        if (passwd) {
+            rc = create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
+                                     magic, NULL, random_key, CURRENT_ENC_VERSION, error);
+        } else {
+            rc = create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
+                                     NULL, NULL, NULL, -1, error);
+        }
+    }
+
     if (rc < 0)
         goto bad;
 
@@ -2328,7 +2371,7 @@ seaf_repo_manager_create_enc_repo (SeafRepoManager *mgr,
     }
 
     if (create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
-                            magic, random_key, enc_version, error) < 0)
+                            magic, NULL, random_key, enc_version, error) < 0)
         return NULL;
 
     if (seaf_repo_manager_set_repo_owner (mgr, repo_id, owner_email) < 0) {
