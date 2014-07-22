@@ -199,7 +199,6 @@ seafile_verify_repo_passwd (const char *repo_id,
 
     if (version != 1 && version != 2) {
         seaf_warning ("Unsupported enc_version %d.\n", version);
-        return -1;
     }
 
     /* Recompute the magic and compare it with the one comes with the repo. */
