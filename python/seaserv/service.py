@@ -388,6 +388,17 @@ def create_repo(name, desc, user, passwd):
         ret = None
     return ret
     
+def create_repo_cryptostick(name, desc, user, public_key):
+    """
+    Return repo id if successfully created a repo, otherwise None.
+    """
+    try:
+        ret = seafserv_threaded_rpc.create_repo_cryptostick(name, desc, user, public_key)
+    except SearpcError, e:
+        logger.error(e)
+        ret = None
+    return ret
+
 def remove_repo(repo_id):
     """
     Return true if successfully removed a repo, otherwise false.

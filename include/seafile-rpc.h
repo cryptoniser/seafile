@@ -767,6 +767,17 @@ seafile_create_repo (const char *repo_name,
                      const char *passwd,
                      GError **error);
 
+/**
+ * create a repo on seahub
+ * using cryptostick
+ */
+char *
+seafile_create_repo_cryptostick (const char *repo_name,
+                                 const char *repo_desc,
+                                 const char *owner_email,
+                                 const char *public_key,
+                                 GError **error);
+
 char *
 seafile_create_enc_repo (const char *repo_id,
                          const char *repo_name,
