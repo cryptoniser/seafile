@@ -47,8 +47,8 @@ class SeafileAPI(object):
         return seafserv_threaded_rpc.create_repo(name, desc, username, passwd)
 
     # create repo using cryptostick
-    def create_repo_cryptostick (self, name, desc, username, public_key):
-        return seafserv_threaded_rpc.create_repo_cryptostick(name, desc, username, public_key)
+    def create_repo_cryptostick (self, name, desc, username, public_key, public_key_exp):
+        return seafserv_threaded_rpc.create_repo_cryptostick(name, desc, username, public_key, public_key_exp)
 
     def create_enc_repo(self, repo_id, name, desc, username, magic, random_key, enc_version):
         return seafserv_threaded_rpc.create_enc_repo(repo_id, name, desc, username, magic, random_key, enc_version)
