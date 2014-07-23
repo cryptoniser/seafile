@@ -33,6 +33,8 @@ struct _SeafCommit {
     int         enc_version;
     char       *magic;
     char       *random_key;
+    char       *hashed_public_key;
+    char       *cs_random_key;
     gboolean    no_local_history;
 
     int         version;
