@@ -171,9 +171,11 @@ seaf_repo_to_commit (SeafRepo *repo, SeafCommit *commit)
         if (commit->enc_version == 1)
             commit->magic = g_strdup (repo->magic);
         else if (commit->enc_version == 2) {
-            commit->magic = g_strdup (repo->magic);
-            commit->random_key = g_strdup (repo->random_key);
-        }
+                commit->hashed_public_key = g_strdup (repo->hashed_public_key);
+                commit->cs_random_key = g_strdup (repo->cs_random_key);
+                commit->magic = g_strdup (repo->magic);
+                commit->random_key = g_strdup (repo->random_key);
+            }
     }
     commit->no_local_history = repo->no_local_history;
     commit->version = repo->version;
@@ -2298,8 +2300,7 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
     char hashed_public_key[65];
     char cs_random_key[513];
 
-    // Cryptostick
-    if (public_key && public_key_exponent) {
+    if (public_key && public_key_exponent) { // Cryptostick
         // hash public key
         seafile_hash_public_key (public_key, hashed_public_key);
         // Generate random_key
