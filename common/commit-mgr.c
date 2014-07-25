@@ -724,7 +724,7 @@ commit_from_json_object (const char *commit_id, json_t *object)
             return NULL;
         break;
     case 2:
-        if(hashed_pubkey == "" ) {
+ /*       if(hashed_pubkey == "" ) {
             if (!magic || strlen(magic) != 64)
                 return NULL;
             if (!random_key || strlen(random_key) != 96)
@@ -732,9 +732,12 @@ commit_from_json_object (const char *commit_id, json_t *object)
         } else {
             if(!hashed_pubkey || strlen(hashed_pubkey) != 64)
                 return NULL;
-            if(!cs_random_key || strlen(cs_random_key) != 512)
-                return NULL;
+            if(!cs_random_key || (strlen(cs_random_key) != 256 && // for 1024 bit RSA key
+                                 strlen(cs_random_key) != 512 &&  // for 2048 bit RSA key
+                                 strlen(cs_random_key) != 768 &&  // for 3072 bit RSA key
+                                 strlen(cs_random_key) != 1024))  // for 4096 bit RSA key
         }
+*/
         break;
     default:
         g_warning ("Unknown encryption version %d.\n", enc_version);
