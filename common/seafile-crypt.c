@@ -150,10 +150,6 @@ seafile_cryptostick_generate_random_key (const char *modulus,
     }
     unsigned char random_key_raw[256];
     int enc_length = RSA_public_encrypt(32, secret_key, random_key_raw, rsa, RSA_PKCS1_PADDING);                                                                                                           
-    seaf_warning("encrypted: \n");
-    for(i=0;i<encryptedLength;i++)    
-        seaf_warning("%.2x ", random_key_raw[i]);
-    seaf_warning("\n");
 
     rawdata_to_hex (random_key_raw, random_key, 256);
 
