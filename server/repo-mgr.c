@@ -154,6 +154,8 @@ seaf_repo_from_commit (SeafRepo *repo, SeafCommit *commit)
         else if (repo->enc_version == 2) {
             memcpy (repo->magic, commit->magic, 64);
             memcpy (repo->random_key, commit->random_key, 96);
+            memcpy (repo->cs_random_key, commit->cs_random_key, 512);
+            memcpy (repo->hashed_public_key, commit->hashed_public_key, 64);
         }
     }
     repo->no_local_history = commit->no_local_history;
@@ -552,6 +554,7 @@ load_repo (SeafRepoManager *manager, const char *repo_id, gboolean ret_corrupt)
     repo = seaf_repo_new(repo_id, NULL, NULL);
     if (!repo) {
         seaf_warning ("[repo mgr] failed to alloc repo.\n");
+        g_warning ("[repo mgr] failed to alloc repo.\n");
         return NULL;
     }
 
@@ -2201,11 +2204,6 @@ create_repo_common (SeafRepoManager *mgr,
             }
         } else { // Cryptostick
             if (!random_key || strlen(random_key) != 512) {
-                if( random_key == NULL )
-                {
-                    g_set_error(error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "!random_key");
-                    return -1;
-                }
                 seaf_warning ("Bad random key (cryptostick).\n");
                 g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
                              "Bad random key (cryptostick) length = %lu, key= %s", strlen(random_key), random_key);
