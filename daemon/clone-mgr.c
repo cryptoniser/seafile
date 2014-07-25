@@ -1176,6 +1176,8 @@ add_task_common (SeafCloneManager *mgr,
                  const char *passwd,
                  int enc_version,
                  const char *random_key,
+//                 const char *cs_random_key,
+//                 const char *hashed_public_key,
                  const char *worktree,
                  const char *peer_addr,
                  const char *peer_port,
@@ -1191,6 +1193,8 @@ add_task_common (SeafCloneManager *mgr,
     task->manager = mgr;
     task->enc_version = enc_version;
     task->random_key = g_strdup (random_key);
+//    task->cs_random_key = g_strdup (cs_random_key);
+//    task->hashed_public_key = g_strdup (hashed_public_key);
     task->repo_version = repo_version;
     if (more_info) {
         json_error_t jerror;
@@ -1259,6 +1263,23 @@ check_encryption_args (const char *magic, int enc_version, const char *random_ke
     return TRUE;
 }
 
+static gboolean
+check_cryptostick_encryption_args (const char* cs_random_key, int enc_version, GError **error) 
+{
+    if (enc_version != 1 && enc_version != 2) {
+        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
+                     "Unsupported enc version");
+        return FALSE;
+    }
+
+    if (!cs_random_key || strlen(cs_random_key) != 512) {
+            g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
+                         "Cryptostick Random key not specified");
+            return FALSE;
+    }
+    return TRUE;
+}
+
 char *
 seaf_clone_manager_add_task (SeafCloneManager *mgr, 
                              const char *repo_id,
@@ -1270,6 +1291,9 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
                              const char *magic,
                              int enc_version,
                              const char *random_key,
+                             const char *cs_random_key,
+                             const char *hashed_public_key,
+                             const char *selected_hashed_public_key,
                              const char *worktree_in,
                              const char *peer_addr,
                              const char *peer_port,
@@ -1302,6 +1326,11 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
         return NULL;
     }
 
+/*   
+    if(hashed_public_key &&
+        !check_cryptostick_encryption_args (cs_random_key, enc_version, error) )
+        return NULL;
+*/
     repo = seaf_repo_manager_get_repo (seaf->repo_mgr, repo_id);
 
     if (repo != NULL && repo->head != NULL) {
@@ -1322,6 +1351,14 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
                      "Incorrect password");
         return NULL;
     }
+/*
+    if (hashed_public_key &&
+        g_strcmp0 (hashed_public_key, selected_hashed_public_key) != 0) {
+        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL,
+                     "Incorrect cryptostick");
+        return NULL;
+    }
+*/       
 
     if (!seaf_clone_manager_check_worktree_path (mgr, worktree_in, error))
         return NULL;
@@ -1331,6 +1368,7 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
      */
     worktree = make_worktree (mgr, worktree_in, FALSE, error);
     if (!worktree) {
+seaf_warning("!worktree --------------------------------------------------------------------------------------------------\n");
         return NULL;
     }
 
@@ -1345,12 +1383,11 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
     if (!repo)
         seaf_repo_manager_remove_repo_ondisk (seaf->repo_mgr, repo_id, FALSE);
 
-    ret = add_task_common (mgr, repo_id, repo_version,
+    ret = add_task_common (mgr, repo, repo_id, repo_version,
                            peer_id, repo_name, token, passwd,
                            enc_version, random_key,
-                           worktree, peer_addr, peer_port,
-                           email, more_info,
-                           error);
+                           worktree, peer_addr, peer_port, 
+                           email, more_info, error);
     g_free (worktree);
 
     return ret;
@@ -1388,6 +1425,8 @@ seaf_clone_manager_add_download_task (SeafCloneManager *mgr,
                                       const char *magic,
                                       int enc_version,
                                       const char *random_key,
+//                                      const char *cs_random_key,
+//                                      const char *hashed_public_key,
                                       const char *wt_parent,
                                       const char *peer_addr,
                                       const char *peer_port,
@@ -1463,7 +1502,7 @@ seaf_clone_manager_add_download_task (SeafCloneManager *mgr,
     ret = add_task_common (mgr, repo_id, repo_version,
                            peer_id, repo_name, token, passwd,
                            enc_version, random_key,
-                           worktree, peer_addr, peer_port,
+                           worktree, peer_addr, peer_port, 
                            email, more_info, error);
     g_free (worktree);
     g_free (wt_tmp);
@@ -2051,12 +2090,12 @@ start_checkout (SeafRepo *repo, CloneTask *task)
             transition_to_error (task, CLONE_ERROR_INTERNAL);
             return;
         }
-    } else if (repo->encrypted) {
+    } /*else if (repo->encrypted) {
         seaf_warning ("[Clone mgr] Password is empty for encrypted repo %s.\n",
                    repo->id);
         transition_to_error (task, CLONE_ERROR_PASSWD);
         return;
-    }
+    }*/
 
     if (g_access (task->worktree, F_OK) != 0 &&
         g_mkdir_with_parents (task->worktree, 0777) < 0) {

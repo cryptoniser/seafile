@@ -58,7 +58,10 @@ convert_repo_list (GList *inner_repos)
 
         if (r->encrypted && r->enc_version == 2)
             g_object_set (repo, "magic", r->magic,
-                          "random_key", r->random_key, NULL);
+                          "random_key", r->random_key, 
+                          "cs_random_key", r->cs_random_key,
+                          "hashed_public_key", r->hashed_public_key,
+                          NULL);
 
 #ifdef SEAFILE_SERVER
         g_object_set (repo, "store_id", r->store_id,
@@ -280,6 +283,9 @@ seafile_clone (const char *repo_id,
                const char *peer_port,
                const char *email,
                const char *random_key,
+               const char *cs_random_key,
+               const char *hashed_public_key,
+               const char *selected_hashed_public_key,
                int enc_version,
                const char *more_info,
                GError **error)
@@ -312,7 +318,8 @@ seafile_clone (const char *repo_id,
                                         repo_name, token,
                                         passwd, magic,
                                         enc_version, random_key,
-                                        worktree,
+                                        cs_random_key, hashed_public_key,
+                                        selected_hashed_public_key, worktree,
                                         peer_addr, peer_port,
                                         email, more_info,
                                         error);
@@ -331,6 +338,8 @@ seafile_download (const char *repo_id,
                   const char *peer_port,
                   const char *email,
                   const char *random_key,
+//                  const char *cs_random_key,
+//                  const char *hashed_public_key,
                   int enc_version,
                   const char *more_info,
                   GError **error)
@@ -363,6 +372,7 @@ seafile_download (const char *repo_id,
                                                  repo_name, token,
                                                  passwd, magic,
                                                  enc_version, random_key,
+//                                                 cs_random_key, hashed_public_key,
                                                  wt_parent,
                                                  peer_addr, peer_port,
                                                  email, more_info,
@@ -880,8 +890,10 @@ seafile_get_repo (const char *repo_id, GError **error)
 
     r = seaf_repo_manager_get_repo (seaf->repo_mgr, repo_id);
     /* Don't return repo that's not checked out. */
-    if (r == NULL)
+    if (r == NULL) {
+        g_warning("NULL seaf_repo_manager_get_repo: repo_id=%s \n",repo_id);
         return NULL;
+    }
 
 #ifndef SEAFILE_SERVER
     if (r->head == NULL)
@@ -909,9 +921,14 @@ seafile_get_repo (const char *repo_id, GError **error)
                       NULL);
     }
 
-    if (r->encrypted && r->enc_version == 2)
-        g_object_set (repo, "random_key", r->random_key, NULL);
-
+    if (r->encrypted && r->enc_version == 2) {
+        g_warning("r->cs_random_key = %s, r->hashedkey = %s\n",r->cs_random_key, r->hashed_public_key);
+        g_object_set (repo, 
+                      "random_key", r->random_key, 
+                      "cs_random_key", r->cs_random_key,
+                      "hashed_public_key", r->hashed_public_key,
+                      NULL);
+    }
     g_object_set (repo, "store_id", r->store_id, NULL);
 #endif
 
@@ -1765,7 +1782,10 @@ seafile_get_orphan_repo_list(GError **error)
                       NULL);
         if (r->encrypted && r->enc_version == 2)
             g_object_set (repo, "magic", r->magic,
-                          "random_key", r->random_key, NULL);
+                          "random_key", r->random_key, 
+                          "cs_random_key", r->cs_random_key,
+                          "hashed_public_key", r->hashed_public_key,
+                          NULL);
 
         ret = g_list_prepend (ret, repo);
         seaf_repo_unref (r);
@@ -1801,7 +1821,10 @@ seafile_list_owned_repos (const char *email, GError **error)
                       NULL);
         if (r->encrypted && r->enc_version == 2)
             g_object_set (repo, "magic", r->magic,
-                          "random_key", r->random_key, NULL);
+                          "random_key", r->random_key, 
+                          "cs_random_key", r->cs_random_key,
+                          "hashed_public_key", r->hashed_public_key,
+                          NULL);
 
         ret = g_list_prepend (ret, repo);
         seaf_repo_unref (r);
