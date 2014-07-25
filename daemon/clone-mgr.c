@@ -1396,7 +1396,6 @@ seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashe
         !check_cryptostick_encryption_args (cs_random_key, enc_version, error) )
         return NULL;
 */
-
     repo = seaf_repo_manager_get_repo (seaf->repo_mgr, repo_id);
 
     if (repo != NULL && repo->head != NULL) {
@@ -1425,6 +1424,14 @@ seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashe
             return NULL;
         }
     }
+/*
+    if (hashed_public_key &&
+        g_strcmp0 (hashed_public_key, selected_hashed_public_key) != 0) {
+        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL,
+                     "Incorrect cryptostick");
+        return NULL;
+    }
+*/       
 
     if (!seaf_clone_manager_check_worktree_path (mgr, worktree_in, error)) {
         seaf_warning("DEBUG: !seaf_clone_manager_check_worktree_path\n");
@@ -1450,6 +1457,7 @@ seaf_warning("DEBUG: !worktree\n");
     /* Delete orphan information in the db in case the repo was corrupt. */
     if (!repo)
         seaf_repo_manager_remove_repo_ondisk (seaf->repo_mgr, repo_id, FALSE);
+
 
     ret = add_task_common (mgr, repo, repo_id, repo_version,
                            peer_id, repo_name, token, passwd,
