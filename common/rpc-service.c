@@ -338,8 +338,8 @@ seafile_download (const char *repo_id,
                   const char *peer_port,
                   const char *email,
                   const char *random_key,
-//                  const char *cs_random_key,
-//                  const char *hashed_public_key,
+                  const char *cs_random_key,
+                  const char *hashed_public_key,
                   int enc_version,
                   const char *more_info,
                   GError **error)
@@ -887,7 +887,6 @@ seafile_get_repo (const char *repo_id, GError **error)
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "Invalid repo id");
         return NULL;
     }
-
     r = seaf_repo_manager_get_repo (seaf->repo_mgr, repo_id);
     /* Don't return repo that's not checked out. */
     if (r == NULL) {
@@ -3743,7 +3742,7 @@ seafile_get_virtual_repo (const char *origin_repo,
                                                      owner);
     if (!repo_id)
         return NULL;
-
+seaf_warning("seafile_get_virtual_repo?? \n");
     repo_obj = seafile_get_repo (repo_id, error);
 
     g_free (repo_id);
