@@ -115,8 +115,8 @@ class SeafileRpcClient(ccnet.RpcClientBase):
         pass
     clone = seafile_clone
 
-    @searpc_func("string", ["string", "int", "string", "string", "string", "string", "string", "string", "string", "string", "string", "int", "string"])
-    def seafile_download(repo_id, repo_version, peer_id, repo_name, wt_parent, token, password, magic, peer_addr, peer_port, email, random_key, enc_version, more_info):
+    @searpc_func("string", ["string", "int", "string", "string", "string", "string", "string", "string", "string", "string", "string", "string", "string", "int", "string"])
+    def seafile_download(repo_id, repo_version, peer_id, repo_name, wt_parent, token, password, magic, peer_addr, peer_port, email, random_key, cs_random_key, hashed_public_key, enc_version, more_info):
         pass
     download = seafile_download
 
