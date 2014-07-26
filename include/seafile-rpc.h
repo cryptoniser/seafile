@@ -272,6 +272,7 @@ seafile_download (const char *repo_id,
                   const char *random_key,
                   const char *cs_random_key,
                   const char *hashed_public_key,
+                  const char *selected_hashed_public_key,
                   int enc_version,
                   const char *more_info,
                   GError **error);
