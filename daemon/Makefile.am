@@ -6,11 +6,13 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/cryptostick \
 	@CCNET_CFLAGS@ \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
 	@MSVC_CFLAGS@ \
 	@CURL_CFLAGS@
+	@PCSCLITE_CFLAGS@ \
 	-Wall
 
 bin_PROGRAMS = 

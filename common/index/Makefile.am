@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -Wall -I${top_srcdir}/common -I${top_srcdir}/lib \
-	@MSVC_CFLAGS@
+	@MSVC_CFLAGS@ @PCSCLITE_CFLAGS@
 
 noinst_LTLIBRARIES = libindex.la
 

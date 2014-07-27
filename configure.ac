@@ -150,8 +150,12 @@ AM_CONDITIONAL([WIN32], [test "$bwin32" = "true"])
 AM_CONDITIONAL([MACOS], [test "$bmac" = "true"])
 AM_CONDITIONAL([LINUX], [test "$blinux" = "true"])
 
-
 # check libraries
+if test "$blinux" = true; then
+  AC_CHECK_LIB(pcsclite, SCardConnect, [echo "found library pcsclite"],
+    AC_MSG_ERROR([*** Unable to find pcsclite library]),)
+fi
+
 if test "$bwin32" != true; then
   if test "$bmac" = true; then
   AC_CHECK_LIB(c, uuid_generate, [echo "found library uuid"],
@@ -216,6 +220,7 @@ else
   LIB_PSAPI=
   LIB_MAC=
   MSVC_CFLAGS=
+  LIB_PCSCLITE=-lpcsclite
 fi
 
 AC_SUBST(LIB_WS32)
@@ -229,6 +234,7 @@ AC_SUBST(LIB_SHELL32)
 AC_SUBST(LIB_PSAPI)
 AC_SUBST(LIB_MAC)
 AC_SUBST(MSVC_CFLAGS)
+AC_SUBST(LIB_PCSCLITE)
 
 
 LIBEVENT_REQUIRED=2.0
@@ -237,6 +243,7 @@ CCNET_REQUIRED=0.9.3
 SEARPC_REQUIRED=1.0
 JANSSON_REQUIRED=2.2.1
 ZDB_REQUIRED=2.10
+PCSCLITE_REQUIRED=1.8.11
 #LIBNAUTILUS_EXTENSION_REQUIRED=2.30.1
 CURL_REQUIRED=7.17
 FUSE_REQUIRED=2.7.3
@@ -270,9 +277,15 @@ PKG_CHECK_MODULES(LIBEVENT, [libevent >= $LIBEVENT_REQUIRED])
 AC_SUBST(LIBEVENT_CFLAGS)
 AC_SUBST(LIBEVENT_LIBS)
 
-PKG_CHECK_MODULES(ZLIB, [zlib >= $ZLIB_REQUIRED])
-AC_SUBST(ZLIB_CFLAGS)
-AC_SUBST(ZLIB_LIBS)
+PKG_CHECK_MODULES(PCSCLITE, [pcsclite >= $PCSCLITE_REQUIRED])
+AC_SUBST(PCSCLITE_CFLAGS)
+AC_SUBST(PCSCLITE_LIBS)
+
+#if test "${compile_client}" = "yes"; then
+   PKG_CHECK_MODULES(ZLIB, [zlib >= $ZLIB_REQUIRED])
+   AC_SUBST(ZLIB_CFLAGS)
+   AC_SUBST(ZLIB_LIBS)
+#fi
 
 if test x${compile_python} = xyes; then
    AM_PATH_PYTHON([2.6])
