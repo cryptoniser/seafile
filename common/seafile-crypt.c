@@ -7,6 +7,7 @@
 #include <openssl/sha.h>
 #include <openssl/rsa.h>
 #include <openssl/err.h>
+#include "cryptostick.h"
 
 #include "utils.h"
 #include "log.h"
@@ -149,10 +150,12 @@ seafile_cryptostick_generate_random_key (const char *modulus,
         return -1;
     }
     unsigned char random_key_raw[256];
-    int enc_length = RSA_public_encrypt(32, secret_key, random_key_raw, rsa, RSA_PKCS1_PADDING);                                                                                                           
+    int enc_length = RSA_public_encrypt(32, secret_key, random_key_raw, rsa, RSA_PKCS1_PADDING);
+    if (enc_length == -1 )
+        return -1;
 
     rawdata_to_hex (random_key_raw, random_key, 256);
-
+    random_key[512] = '\0';
 }
 
 void
@@ -220,6 +223,66 @@ seafile_verify_repo_passwd (const char *repo_id,
         return 0;
     else
         return -1;
+}
+
+int    
+seafile_decrypt_repo_enc_key_cryptostick (card_t *card, int enc_version,
+                                          const char* cs_random_key,     
+                                          unsigned char *key_out, unsigned char *iv_out)
+{
+seaf_warning("--------------------- cs_random_key = %s \n\n",cs_random_key);
+    int r;
+    unsigned char key[32], iv[16]; 
+
+    if (enc_version == 2) {   
+        
+        unsigned char enc_random_key[256], *dec_random_key;
+        int outlen;
+        SeafileCrypt *crypt;  
+
+        if (cs_random_key == NULL || cs_random_key[0] == 0) {
+            seaf_warning ("Empty random key. (cryptostick) \n");
+            return -1;        
+        }
+
+        hex_to_rawdata (cs_random_key, enc_random_key, 256);
+        unsigned char* test_serial = (unsigned char*)malloc(sizeof(unsigned char)*6);
+        r = csGetSerialNo(card, test_serial);
+        printf("get serial error = %d\n",r);
+        seaf_warning("SERIAL NO:\n");
+        int j=0;
+            for(j=0; j<6 ;j++)
+                seaf_warning("%.2x ", test_serial[j]);
+            printf("\n");
+
+        /* TODO: RSA DECIPHER HERE */
+        r= csDecipher(card, enc_random_key, 256, dec_random_key, 32);
+        if (r != 0 ) {
+            seaf_warning("RSA failed, error = %d\n",r);
+            return -1;
+        }
+/*
+        crypt = seafile_crypt_new (enc_version, key, iv);
+        if (seafile_decrypt ((char **)&dec_random_key, &outlen,
+                             (char *)enc_random_key, 48,
+                             crypt) < 0) {
+            seaf_warning ("Failed to decrypt random key.\n");
+            g_free (crypt);
+            return -1;
+        }
+        g_free (crypt);
+  */      
+
+        seafile_derive_key ((char *)dec_random_key, 32, enc_version,
+                                  key, iv);                      
+
+        memcpy (key_out, key, 32);     
+        memcpy (iv_out, iv, 16);       
+
+        return 0;
+    }  
+
+    return -1;
 }
 
 int
@@ -432,7 +495,7 @@ seafile_decrypt (char **data_out,
      * be a multiple of BLK_SIZE */
     if ( data_in == NULL || in_len <= 0 || in_len % BLK_SIZE != 0 ||
          crypt == NULL) {
-
+        seaf_warning("Invalid param(s).\n");
         g_warning ("Invalid param(s).\n");
         return -1;
     }
@@ -462,8 +525,10 @@ seafile_decrypt (char **data_out,
                                   crypt->key,  /* derived key */
                                   crypt->iv);  /* initial vector */
 
-    if (ret == DEC_FAILURE)
+    if (ret == DEC_FAILURE) {
+    seaf_warning("DEC_FAILURE\n");
         return -1;
+    }
 
     /* Allocating output buffer. */
     
@@ -471,6 +536,7 @@ seafile_decrypt (char **data_out,
 
     if (*data_out == NULL) {
         g_warning ("failed to allocate the output buffer.\n");
+    seaf_warning("failed to allocate the output buffer.\n");
         goto dec_error;
     }                
 
@@ -483,8 +549,10 @@ seafile_decrypt (char **data_out,
                              (unsigned char*)data_in,
                              in_len);
 
-    if (ret == DEC_FAILURE)
+    if (ret == DEC_FAILURE) {
+    seaf_warning("DEC_FAILURE 2\n");
         goto dec_error;
+    }
 
 
     /* Finish the possible partial block. */

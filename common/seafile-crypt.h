@@ -13,7 +13,7 @@
 
 #include <openssl/aes.h>
 #include <openssl/evp.h>
-
+#include "cryptostick/cryptostick.h"
 
 /* Block size, in bytes. For AES it can only be 16 bytes. */
 #define BLK_SIZE 16
@@ -80,6 +80,10 @@ seafile_verify_repo_passwd (const char *repo_id,
                             const char *magic,
                             int version);
 
+int    
+seafile_decrypt_repo_enc_key_cryptostick (card_t *card, int enc_version,
+                                          const char* cs_random_key,     
+                                          unsigned char *key_out, unsigned char *iv_out);
 int
 seafile_decrypt_repo_enc_key (int enc_version,
                                const char *passwd, const char *random_key,
