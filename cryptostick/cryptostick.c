@@ -264,3 +264,33 @@ int csFindCard(unsigned char search_serial_no[9], card_t* card)
     return -1; 
 
 }
+
+int csFindCard(unsigned char search_serial_no[9], card_t* card)
+{
+    cs_list cryptosticks;
+    cs_list_node* currentNode = NULL;
+    cs_list_node* matchedNode = NULL;
+    card_t* selected_card = NULL;  
+    unsigned char serialNo[9];
+    int i=0;
+    if( csListDevices(&cryptosticks) == 0 && cryptosticks.numOfNodes > 0 ) {
+        cs_list_node* currentNode = cryptosticks.root;
+
+        /* Traverse the cryptostick linked-list to find a matching serial number */
+        for(i=0; i<cryptosticks.numOfNodes; i++)
+        {
+            csGetSerialNo(currentNode->card, serialNo);
+          
+            if ( g_strcmp0((const char*)serialNo, (const char*)search_serial_no) == 0) {
+                matchedNode = currentNode;
+                card = currentNode->card;
+                return 0;
+            }
+
+            currentNode = currentNode->next;                                                                                                                                                                                           
+        }
+    }
+
+    return -1; 
+
+}
