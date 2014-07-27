@@ -145,9 +145,9 @@ int csVerifyPIN(card_t *card, unsigned char* pin, int pinLength)
     pin_data.pin1.encoding = SC_PIN_ENCODING_ASCII;
 
     int tries_left;
-    pgp_pin_cmd(card, &pin_data, &tries_left);
+    r = pgp_pin_cmd(card, &pin_data, &tries_left);
 
-    return 0;
+    return r;
 }
 
 int csDecipher(card_t *card, unsigned char* input, size_t in_len,
@@ -232,4 +232,34 @@ int csHashPublicKey(card_t *card, unsigned char hashedKey[65])
         sprintf((char*)(hashedKey + (i * 2)), "%02x", hash[i]);
     }
     hashedKey[64] = '\0';
+}
+
+int csFindCard(unsigned char search_serial_no[9], card_t* card)
+{
+    cs_list cryptosticks;
+    cs_list_node* currentNode = NULL;
+    cs_list_node* matchedNode = NULL;
+    card_t* selected_card = NULL;  
+    unsigned char serialNo[9];
+    int i=0;
+    if( csListDevices(&cryptosticks) == 0 && cryptosticks.numOfNodes > 0 ) {
+        cs_list_node* currentNode = cryptosticks.root;
+
+        /* Traverse the cryptostick linked-list to find a matching serial number */
+        for(i=0; i<cryptosticks.numOfNodes; i++)
+        {
+            csGetSerialNo(currentNode->card, serialNo);
+          
+            if ( g_strcmp0((const char*)serialNo, (const char*)search_serial_no) == 0) {
+                matchedNode = currentNode;
+                card = currentNode->card;
+                return 0;
+            }
+
+            currentNode = currentNode->next;                                                                                                                                                                                           
+        }
+    }
+
+    return -1; 
+
 }
