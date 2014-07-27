@@ -24,6 +24,10 @@
 #include "seafile-config.h"
 #endif
 
+#ifndef SEAFILE_SERVER
+#include "cryptostick.h"
+#endif
+
 #include "log.h"
 
 #ifndef SEAFILE_SERVER
@@ -286,10 +290,14 @@ seafile_clone (const char *repo_id,
                const char *cs_random_key,
                const char *hashed_public_key,
                const char *selected_hashed_public_key,
+               const char *cs_serial_no,
+               const char *cs_pin,
+//               card_t* card,
                int enc_version,
                const char *more_info,
                GError **error)
 {
+seaf_warning("TRACE: seafile_clone, \n\tcs_random_key= %s\n\thashed puk =  %s\n",cs_random_key, hashed_public_key);
     if (!repo_id || strlen(repo_id) != 36) {
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "Invalid repo id");
         return NULL;
@@ -319,7 +327,11 @@ seafile_clone (const char *repo_id,
                                         passwd, magic,
                                         enc_version, random_key,
                                         cs_random_key, hashed_public_key,
-                                        selected_hashed_public_key, worktree,
+                                        selected_hashed_public_key, 
+                                        cs_serial_no,
+                                        cs_pin,
+                                        /*card,*/
+                                        worktree,
                                         peer_addr, peer_port,
                                         email, more_info,
                                         error);
@@ -341,6 +353,9 @@ seafile_download (const char *repo_id,
                   const char *cs_random_key,
                   const char *hashed_public_key,
                   const char *selected_hashed_public_key,
+                  const char *cs_serial_no,
+                  const char *cs_pin,
+//                  card_t* card,
                   int enc_version,
                   const char *more_info,
                   GError **error)
@@ -375,6 +390,9 @@ seafile_download (const char *repo_id,
                                                  enc_version, random_key,
                                                  cs_random_key, hashed_public_key,
                                                  selected_hashed_public_key,
+                                                 cs_serial_no,
+                                                 cs_pin,
+                                                 /* card, */
                                                  wt_parent,
                                                  peer_addr, peer_port,
                                                  email, more_info,
