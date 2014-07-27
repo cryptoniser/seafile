@@ -37,6 +37,8 @@ int csEncrypt(card_t* card, unsigned char* input, unsigned inputLength,
 
 int csHashPublicKey(card_t *card, unsigned char hashedKey[65]);
 
+int csFindCard(unsigned char serial_no[9], card_t* card);
+
 #ifdef __cplusplus
 }
 #endif
