@@ -55,9 +55,12 @@ struct _CloneTask {
     char                *worktree;
     char                *passwd;
     int                  enc_version;
-    char                *random_key;
-//    char                *cs_random_key;
-//    char                *hashed_public_key;
+    unsigned char       *random_key;
+    unsigned char       *cs_serial_no;
+    char                *cs_pin;
+//    card_t              *cryptostick;
+    char                *cs_random_key;
+    char                *hashed_public_key;
 
     char                 root_id[41];
     gboolean             is_readonly;
@@ -112,6 +115,9 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
                              const char *cs_random_key,
                              const char *hashed_public_key,
                              const char *selected_hashed_public_key,
+                             const char *cs_serial_no,
+                             const char *cs_pin,
+//                             card_t *card,
                              const char *worktree,
                              const char *peer_addr,
                              const char *peer_port,
@@ -135,8 +141,12 @@ seaf_clone_manager_add_download_task (SeafCloneManager *mgr,
                                       const char *magic,
                                       int enc_version,
                                       const char *random_key,
-//                                      const char *cs_random_key,
-//                                      const char *hashed_public_key,
+                                      const char *cs_random_key,
+                                      const char *hashed_public_key,
+                                      const char *selected_hashed_public_key,
+                                      const char *cs_serial_no,
+                                      const char *cs_pin,
+                                      /* card_t *card, */
                                       const char *wt_parent,
                                       const char *peer_addr,
                                       const char *peer_port,

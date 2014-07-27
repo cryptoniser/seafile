@@ -903,6 +903,7 @@ out:
     return ret;
 }
 
+
 #ifndef __APPLE__
 
 static int
@@ -1440,6 +1441,7 @@ index_add (SeafRepo *repo, struct index_state *istate,
     return ret;
 }
 
+
 /*
  * Add the files in @worktree to index and return the corresponding
  * @root_id. The repo doesn't have to exist.
@@ -1452,8 +1454,12 @@ seaf_repo_index_worktree_files (const char *repo_id,
                                 const char *passwd,
                                 int enc_version,
                                 const char *random_key,
+                                const char *cs_random_key,
+                                const char *cs_serial_no,
+                                const char *cs_pin,
                                 char *root_id)
 {
+seaf_warning("((((((________________TRACE:seaf_repo_index_worktree_files \n\t cs_random_key =%s \n\t cs_serial_no = %s\n\t cs_pin = %s\n",cs_random_key, cs_serial_no, cs_pin);
     char index_path[SEAF_PATH_MAX];
     struct index_state istate;
     unsigned char key[32], iv[16];
@@ -1482,6 +1488,54 @@ seaf_repo_index_worktree_files (const char *repo_id,
             goto error;
         }
         crypt = seafile_crypt_new (enc_version, key, iv);
+    } else if (cs_random_key != NULL ){
+        
+        cs_list cryptosticks;
+        cs_list_node* currentNode = NULL;
+        cs_list_node* matchedNode = NULL;
+        card_t* selected_card = NULL;
+        unsigned char serialNo[9];
+        int i=0;
+        if( csListDevices(&cryptosticks) == 0 && cryptosticks.numOfNodes > 0 ) {
+            cs_list_node* currentNode = cryptosticks.root;
+
+            // Traverse the cryptostick linked-list to find a matching serial number 
+            for(i=0; i<cryptosticks.numOfNodes; i++)
+            {
+                csGetSerialNo(currentNode->card, serialNo);
+              
+                if ( g_strcmp0((const char*)serialNo, (const char*)cs_serial_no) == 0) {
+                    seaf_warning("---------------------------FOUND IT!YAY!\n\n");
+                    matchedNode = currentNode;
+                    i=cryptosticks.numOfNodes+1;
+                }
+
+                currentNode = currentNode->next;
+            }
+            
+            // Did not find a match
+            if ( i == cryptosticks.numOfNodes ) {
+            seaf_warning("----------------------------------- i == cryptosticks.numOfNodes = %d \n\n", cryptosticks.numOfNodes);
+                return -1;
+            }
+            
+        } else {
+            // Requested use of a cryptostick, but zero devices found
+            return -1;
+        }
+
+                seaf_warning("---------------------------FOUND IT!YAY!\n\n");
+        // Select the card
+        selected_card = matchedNode->card;
+        
+        if (csVerifyPIN(selected_card, cs_pin, strlen(cs_pin)) != 0) {
+            seaf_warning("Wrong PIN (cryptostick) %s (len = %d).\n", cs_pin, strlen(cs_pin));
+            goto error;
+        }
+        if (seafile_decrypt_repo_enc_key_cryptostick(selected_card, enc_version, cs_random_key, key, iv) < 0 ) {
+            seaf_warning("Failed to generate enc key for repo (cryptostick) %s.\n", repo_id);
+            goto error;
+        }
     }
 
     ignore_list = seaf_repo_load_ignore_files(worktree);
@@ -3186,6 +3240,7 @@ int
 seaf_repo_manager_add_repo (SeafRepoManager *manager,
                             SeafRepo *repo)
 {
+seaf_warning("TRACE: seaf_repo_manager_add_repo:\n\t repo->cs_random_key = %s \n\t repo->hashed_public_key\n", repo->cs_random_key, repo->hashed_public_key);
     char sql[256];
     sqlite3 *db = manager->priv->db;
 
@@ -3714,6 +3769,7 @@ load_branch_cb (sqlite3_stmt *stmt, void *vrepo)
 static SeafRepo *
 load_repo (SeafRepoManager *manager, const char *repo_id)
 {
+seaf_warning("TRACE: load_repo\n");
     char sql[256];
 
     SeafRepo *repo = seaf_repo_new(repo_id, NULL, NULL);
@@ -4121,6 +4177,76 @@ save_repo_enc_info (SeafRepoManager *manager,
         return -1;
 
     return 0;
+}
+
+int
+seaf_repo_manager_set_repo_cryptostick (SeafRepoManager *manager,
+                                        SeafRepo *repo, unsigned char* cs_serial_no, unsigned char* cs_pin
+                                        /* ,card_t* card */ )
+{
+seaf_warning("------------------------------------------ cs_serial_no = %s, cs_pin = %s\n\n",cs_serial_no, cs_pin);
+    int ret;
+
+    // TODO:
+    // take the list of plugged-in cryptosticks
+
+    cs_list cryptosticks;
+    cs_list_node* currentNode = NULL;
+    cs_list_node* matchedNode = NULL;
+    card_t* selected_card = NULL;
+    unsigned char serialNo[9];
+    int i=0;
+    if( csListDevices(&cryptosticks) == 0 && cryptosticks.numOfNodes > 0 ) {
+        cs_list_node* currentNode = cryptosticks.root;
+
+        // Traverse the cryptostick linked-list to find a matching serial number 
+        for(i=0; i<cryptosticks.numOfNodes; i++)
+        {
+            csGetSerialNo(currentNode->card, serialNo);
+          
+            if ( g_strcmp0((const char*)serialNo, (const char*)cs_serial_no) == 0) {
+                seaf_warning("---------------------------FOUND IT!YAY!\n\n");
+                matchedNode = currentNode;
+                i = cryptosticks.numOfNodes+1;
+            }
+
+            currentNode = currentNode->next;
+        }
+        
+        // Did not find a match
+        if ( i == cryptosticks.numOfNodes ) {
+        seaf_warning("----------------------------------- i == cryptosticks.numOfNodes = %d \n\n", cryptosticks.numOfNodes);
+            return -1;
+        }
+        
+    } else {
+        // Requested use of a cryptostick, but zero devices found
+        return -1;
+    }
+
+            seaf_warning("---------------------------FOUND IT!YAY!\n\n");
+    // Select the card
+    selected_card = matchedNode->card;
+
+
+    // VERIFY PIN
+    seaf_warning("----------------------------------- PIN: %s\n\n", cs_pin);
+    if ((ret = csVerifyPIN(selected_card, cs_pin, strlen(cs_pin))) != 0) {
+        seaf_warning("Wrong PIN (cryptostick) %s (len = %d). Error = %d\n", cs_pin, strlen(cs_pin), ret);
+        return -1;
+    }
+    if (seafile_decrypt_repo_enc_key_cryptostick (selected_card, repo->enc_version,
+                                          repo->cs_random_key,     
+                                          repo->enc_key, repo->enc_iv) < 0)
+        return -1;
+
+    pthread_mutex_lock (&manager->priv->db_lock);
+
+    ret = save_repo_enc_info (manager, repo);
+
+    pthread_mutex_unlock (&manager->priv->db_lock);
+
+    return ret;
 }
 
 int 

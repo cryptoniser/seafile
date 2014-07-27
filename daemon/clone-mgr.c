@@ -18,6 +18,8 @@
 
 #include "processors/checkff-proc.h"
 
+#include "cryptostick.h"
+
 #define CLONE_DB "clone.db"
 
 #define CHECK_CONNECT_INTERVAL 5 /* 5s */
@@ -325,6 +327,10 @@ clone_task_new (const char *repo_id,
                 const char *token,
                 const char *worktree,
                 const char *passwd,
+                const char *cs_random_key,
+                const char *hashed_public_key,
+                const char *cs_serial_no,
+                const char *cs_pin,
                 const char *peer_addr,
                 const char *peer_port,
                 const char *email)
@@ -340,6 +346,11 @@ clone_task_new (const char *repo_id,
     task->email = g_strdup(email);
     if (repo_name)
         task->repo_name = g_strdup(repo_name);
+    if (hashed_public_key) {
+        task->cs_random_key = g_strdup (cs_random_key);
+        task->hashed_public_key = g_strdup (hashed_public_key);
+        task->cs_serial_no = g_strdup (cs_serial_no);
+    }
     if (passwd)
         task->passwd = g_strdup (passwd);
 
@@ -352,6 +363,9 @@ clone_task_free (CloneTask *task)
     g_free (task->tx_id);
     g_free (task->worktree);
     g_free (task->passwd);
+    g_free (task->cs_random_key);
+    g_free (task->hashed_public_key);
+    g_free (task->cs_serial_no);
     g_free (task->token);
     g_free (task->repo_name);
     g_free (task->peer_addr);
@@ -420,7 +434,7 @@ load_clone_enc_info (CloneTask *task)
     char sql[256];
 
     snprintf (sql, sizeof(sql),
-              "SELECT enc_version, random_key FROM CloneEncInfo WHERE repo_id='%s'",
+              "SELECT enc_version, random_key, cs_random_key, hashed_public_key FROM CloneEncInfo WHERE repo_id='%s'",
               task->repo_id);
 
     if (sqlite_foreach_selected_row (task->manager->db, sql,
@@ -501,8 +515,10 @@ load_clone_more_info (CloneTask *task)
 static gboolean
 restart_task (sqlite3_stmt *stmt, void *data)
 {
+seaf_warning("-----[Clone manager] restart_task\n");
     SeafCloneManager *mgr = data;
     const char *repo_id, *repo_name, *token, *peer_id, *worktree, *passwd;
+    const char *cs_random_key, *hashed_public_key, *cs_serial_no, *cs_pin;
     const char *peer_addr, *peer_port, *email;
     CloneTask *task;
     SeafRepo *repo;
@@ -513,12 +529,16 @@ restart_task (sqlite3_stmt *stmt, void *data)
     peer_id = (const char *)sqlite3_column_text (stmt, 3);
     worktree = (const char *)sqlite3_column_text (stmt, 4);
     passwd = (const char *)sqlite3_column_text (stmt, 5);
-    peer_addr = (const char *)sqlite3_column_text (stmt, 6);
-    peer_port = (const char *)sqlite3_column_text (stmt, 7);
-    email = (const char *)sqlite3_column_text (stmt, 8);
+    cs_random_key = (const char*)sqlite3_column_text (stmt, 6);
+    hashed_public_key = (const char*)sqlite3_column_text (stmt, 7);
+    cs_serial_no = (const char*)sqlite3_column_text (stmt, 8);
+    cs_pin = (const char*)sqlite3_column_text (stmt, 9);
+    peer_addr = (const char *)sqlite3_column_text (stmt, 10);
+    peer_port = (const char *)sqlite3_column_text (stmt, 11);
+    email = (const char *)sqlite3_column_text (stmt, 12);
 
     task = clone_task_new (repo_id, peer_id, repo_name, 
-                           token, worktree, passwd,
+                           token, worktree, passwd, cs_random_key, hashed_public_key, cs_serial_no, cs_pin,
                            peer_addr, peer_port, email);
     task->manager = mgr;
     /* Default to 1. */
@@ -557,7 +577,7 @@ seaf_clone_manager_init (SeafCloneManager *mgr)
     sql = "CREATE TABLE IF NOT EXISTS CloneTasks "
         "(repo_id TEXT PRIMARY KEY, repo_name TEXT, "
         "token TEXT, dest_id TEXT,"
-        "worktree_parent TEXT, passwd TEXT, "
+        "worktree_parent TEXT, passwd TEXT, cs_random_key TEXT, hashed_public_key TEXT, cs_serial_no TEXT, cs_pin TEXT, "
         "server_addr TEXT, server_port TEXT, email TEXT);";
     if (sqlite_query_exec (mgr->db, sql) < 0)
         return -1;
@@ -568,7 +588,7 @@ seaf_clone_manager_init (SeafCloneManager *mgr)
         return -1;
 
     sql = "CREATE TABLE IF NOT EXISTS CloneEncInfo "
-        "(repo_id TEXT PRIMARY KEY, enc_version INTEGER, random_key TEXT);";
+        "(repo_id TEXT PRIMARY KEY, enc_version INTEGER, random_key TEXT, cs_random_key TEXT, hashed_public_key TEXT, cs_serial_no TEXT, cs_pin TEXT);";
     if (sqlite_query_exec (mgr->db, sql) < 0)
         return -1;
 
@@ -588,6 +608,7 @@ seaf_clone_manager_init (SeafCloneManager *mgr)
 static void
 continue_task_when_peer_connected (CloneTask *task)
 {
+seaf_warning("-----[Clone manager] continue_task_when_peer_connected\n");
     if (ccnet_peer_is_ready (seaf->ccnetrpc_client, task->peer_id))
         start_check_protocol_proc (task->peer_id, task);
 }
@@ -613,6 +634,7 @@ static int check_connect_pulse (void *vmanager)
 int
 seaf_clone_manager_start (SeafCloneManager *mgr)
 {
+seaf_warning("TRACE: seaf_clone_manager_start\n");
     ccnet_proc_factory_register_processor (seaf->session->proc_factory,
                                            "seafile-checkff",
                                            SEAFILE_TYPE_CHECKFF_PROC);
@@ -637,16 +659,27 @@ save_task_to_db (SeafCloneManager *mgr, CloneTask *task)
 {
     char *sql;
 
-    if (task->passwd)
+    if (task->hashed_public_key) {
         sql = sqlite3_mprintf ("REPLACE INTO CloneTasks VALUES "
-            "('%q', '%q', '%q', '%q', '%q', '%q', '%q', '%q', '%q')",
+            "('%q', '%q', '%q', '%q', '%q', NULL, '%q', '%q', '%q', '%q', '%q', '%q', '%q')",
+                                task->repo_id, task->repo_name,
+                                task->token, task->peer_id,
+                                task->worktree, task->cs_random_key, task->hashed_public_key, task->cs_serial_no, task->cs_pin,
+                                task->peer_addr, task->peer_port, task->email);
+        seaf_warning("TRACE: save_task_to_db->cryptostick\n");
+    }
+    else if (task->passwd) {
+        sql = sqlite3_mprintf ("REPLACE INTO CloneTasks VALUES "
+            "('%q', '%q', '%q', '%q', '%q', '%q', NULL, NULL, NULL, NULL, '%q', '%q', '%q')",
                                 task->repo_id, task->repo_name,
                                 task->token, task->peer_id,
                                 task->worktree, task->passwd,
                                 task->peer_addr, task->peer_port, task->email);
+        seaf_warning("TRACE: save_task_to_db->cryptostick\n");
+    }
     else
         sql = sqlite3_mprintf ("REPLACE INTO CloneTasks VALUES "
-            "('%q', '%q', '%q', '%q', '%q', NULL, '%q', '%q', '%q')",
+            "('%q', '%q', '%q', '%q', '%q', NULL, NULL, NULL, NULL, NULL, '%q', '%q', '%q')",
                                 task->repo_id, task->repo_name,
                                 task->token, task->peer_id,
                                 task->worktree, task->peer_addr,
@@ -660,7 +693,7 @@ save_task_to_db (SeafCloneManager *mgr, CloneTask *task)
 
     if (task->passwd && task->enc_version == 2 && task->random_key) {
         sql = sqlite3_mprintf ("REPLACE INTO CloneEncInfo VALUES "
-                               "('%q', %d, '%q')",
+                               "('%q', %d, '%q', NULL, NULL)",
                                task->repo_id, task->enc_version, task->random_key);
         if (sqlite_query_exec (mgr->db, sql) < 0) {
             sqlite3_free (sql);
@@ -668,6 +701,19 @@ save_task_to_db (SeafCloneManager *mgr, CloneTask *task)
         }
         sqlite3_free (sql);
     }
+
+    if (task->cs_random_key && task->hashed_public_key && task->enc_version == 2) {
+        sql = sqlite3_mprintf ("REPLACE INTO CloneEncInfo VALUES "
+                               "('%q', %d, NULL, '%q', '%q', '%q', '%q')",
+                               task->repo_id, task->enc_version, 
+                               task->cs_random_key, task->hashed_public_key, task->cs_serial_no, task->cs_pin);
+        if (sqlite_query_exec (mgr->db, sql) < 0) {
+            sqlite3_free (sql);
+            return -1;
+        }
+        sqlite3_free (sql);
+    }
+    
 
     sql = sqlite3_mprintf ("REPLACE INTO CloneVersionInfo VALUES "
                            "('%q', %d)",
@@ -821,6 +867,9 @@ index_files_job (void *data)
                                         task->worktree,
                                         task->passwd, task->enc_version,
                                         task->random_key,
+                                        task->cs_random_key,
+                                        task->cs_serial_no,
+                                        task->cs_pin,
                                         task->root_id) == 0)
         aux->success = TRUE;
 
@@ -1176,8 +1225,11 @@ add_task_common (SeafCloneManager *mgr,
                  const char *passwd,
                  int enc_version,
                  const char *random_key,
-//                 const char *cs_random_key,
-//                 const char *hashed_public_key,
+                 const char *cs_serial_no,
+                 const char *cs_pin,
+//                 card_t* card,
+                 const char *cs_random_key,
+                 const char *hashed_public_key,
                  const char *worktree,
                  const char *peer_addr,
                  const char *peer_port,
@@ -1186,15 +1238,19 @@ add_task_common (SeafCloneManager *mgr,
                  GError **error)
 {
     CloneTask *task;
+seaf_warning("TRACE: add_task_common, \n\tcs_random_key= %s\n\thashed puk =  %s\n\t serial# = %s \n\t cs_pin = %s",cs_random_key, hashed_public_key, cs_serial_no, cs_pin);
 
     task = clone_task_new (repo_id, peer_id, repo_name,
-                           token, worktree, passwd,
+                           token, worktree, passwd, cs_random_key, hashed_public_key, cs_serial_no, cs_pin,
                            peer_addr, peer_port, email);
     task->manager = mgr;
     task->enc_version = enc_version;
     task->random_key = g_strdup (random_key);
-//    task->cs_random_key = g_strdup (cs_random_key);
-//    task->hashed_public_key = g_strdup (hashed_public_key);
+
+    task->cs_serial_no = g_strdup(cs_serial_no);
+    task->cs_pin = g_strdup(cs_pin);
+    task->cs_random_key = g_strdup (cs_random_key);
+    task->hashed_public_key = g_strdup (hashed_public_key);
     task->repo_version = repo_version;
     if (more_info) {
         json_error_t jerror;
@@ -1251,7 +1307,7 @@ check_encryption_args (const char *magic, int enc_version, const char *random_ke
                      "Unsupported enc version");
         return FALSE;
     }
-
+ 
     if (enc_version == 2) {
         if (!random_key || strlen(random_key) != 96) {
             g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
@@ -1294,6 +1350,9 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
                              const char *cs_random_key,
                              const char *hashed_public_key,
                              const char *selected_hashed_public_key,
+                             const char *cs_serial_no,
+                             const char *cs_pin,
+//                             card_t *card,
                              const char *worktree_in,
                              const char *peer_addr,
                              const char *peer_port,
@@ -1301,6 +1360,7 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
                              const char *more_info,
                              GError **error)
 {
+seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashed puk =  %s\n\t cs_pin = %s \n",cs_random_key, hashed_public_key, cs_pin);
     SeafRepo *repo;
     char *worktree;
     char *ret;
@@ -1310,9 +1370,20 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
         return NULL;
     }
 
+    if (hashed_public_key && strcmp(hashed_public_key, "") != 0) {
+        if (!check_cryptostick_encryption_args(cs_random_key, enc_version, error))
+            return NULL;
+    } else {
+        if (passwd &&
+            !check_encryption_args (magic, enc_version, random_key, error))
+            return NULL;
+    }
+
+/*
     if (passwd &&
         !check_encryption_args (magic, enc_version, random_key, error))
         return NULL;
+*/
 
     /* After a repo was unsynced, the sync task may still be blocked in the
      * network, so the repo is not actually deleted yet.
@@ -1345,12 +1416,29 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
         return NULL;
     }
 
+    if (hashed_public_key && strcmp(hashed_public_key, "") != 0)
+    {
+        if (g_strcmp0 (hashed_public_key, selected_hashed_public_key) != 0) {
+            g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL, "Incorrect cryptostick");
+            return NULL;
+        }
+    } else {
+        if (passwd &&
+            seafile_verify_repo_passwd(repo_id, passwd, magic, enc_version) < 0) {
+            g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL,
+                         "Incorrect password");
+            return NULL;
+        }
+    }
+
+/*
     if (passwd &&
         seafile_verify_repo_passwd(repo_id, passwd, magic, enc_version) < 0) {
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL,
                      "Incorrect password");
         return NULL;
     }
+*/
 /*
     if (hashed_public_key &&
         g_strcmp0 (hashed_public_key, selected_hashed_public_key) != 0) {
@@ -1360,15 +1448,17 @@ seaf_clone_manager_add_task (SeafCloneManager *mgr,
     }
 */       
 
-    if (!seaf_clone_manager_check_worktree_path (mgr, worktree_in, error))
+    if (!seaf_clone_manager_check_worktree_path (mgr, worktree_in, error)) {
+        seaf_warning("DEBUG: !seaf_clone_manager_check_worktree_path\n");
         return NULL;
+    }
 
     /* Return error if worktree_in conflicts with another repo or
      * is not a directory.
      */
     worktree = make_worktree (mgr, worktree_in, FALSE, error);
     if (!worktree) {
-seaf_warning("!worktree --------------------------------------------------------------------------------------------------\n");
+seaf_warning("DEBUG: !worktree\n");
         return NULL;
     }
 
@@ -1385,7 +1475,10 @@ seaf_warning("!worktree --------------------------------------------------------
 
     ret = add_task_common (mgr, repo, repo_id, repo_version,
                            peer_id, repo_name, token, passwd,
-                           enc_version, random_key,
+                           enc_version, random_key, 
+                           cs_serial_no, cs_pin,
+                           /* card,*/
+                           cs_random_key, hashed_public_key,
                            worktree, peer_addr, peer_port, 
                            email, more_info, error);
     g_free (worktree);
@@ -1425,8 +1518,12 @@ seaf_clone_manager_add_download_task (SeafCloneManager *mgr,
                                       const char *magic,
                                       int enc_version,
                                       const char *random_key,
-//                                      const char *cs_random_key,
-//                                      const char *hashed_public_key,
+                                      const char *cs_random_key,
+                                      const char *hashed_public_key,
+                                      const char *selected_hashed_public_key,
+                                      const char *cs_serial_no,
+                                      const char *cs_pin,
+                                      /* card_t *card, */
                                       const char *wt_parent,
                                       const char *peer_addr,
                                       const char *peer_port,
@@ -1443,9 +1540,14 @@ seaf_clone_manager_add_download_task (SeafCloneManager *mgr,
         return NULL;
     }
 
-    if (passwd &&
-        !check_encryption_args (magic, enc_version, random_key, error))
-        return NULL;
+    if (hashed_public_key && strcmp(hashed_public_key, "") != 0) {
+        if (!check_cryptostick_encryption_args(cs_random_key, enc_version, error))
+            return NULL;
+    } else {
+        if (passwd &&
+            !check_encryption_args (magic, enc_version, random_key, error))
+            return NULL;
+    }
 
     /* After a repo was unsynced, the sync task may still be blocked in the
      * network, so the repo is not actually deleted yet.
@@ -1473,11 +1575,19 @@ seaf_clone_manager_add_download_task (SeafCloneManager *mgr,
         return NULL;
     }
 
-    if (passwd &&
-        seafile_verify_repo_passwd(repo_id, passwd, magic, enc_version) < 0) {
-        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL,
-                     "Incorrect password");
-        return NULL;
+    if (hashed_public_key && strcmp(hashed_public_key, "") != 0)
+    {
+        if (g_strcmp0 (hashed_public_key, selected_hashed_public_key) != 0) {
+            g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL, "Incorrect cryptostick");
+            return NULL;
+        }
+    } else {
+        if (passwd &&
+            seafile_verify_repo_passwd(repo_id, passwd, magic, enc_version) < 0) {
+            g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL,
+                         "Incorrect password");
+            return NULL;
+        }
     }
 
     wt_tmp = g_build_filename (wt_parent, repo_name, NULL);
@@ -1501,7 +1611,9 @@ seaf_clone_manager_add_download_task (SeafCloneManager *mgr,
 
     ret = add_task_common (mgr, repo_id, repo_version,
                            peer_id, repo_name, token, passwd,
-                           enc_version, random_key,
+                           enc_version, random_key, 
+                           cs_serial_no, cs_pin,
+                           /* card, */ cs_random_key, hashed_public_key,
                            worktree, peer_addr, peer_port, 
                            email, more_info, error);
     g_free (worktree);
@@ -2082,20 +2194,34 @@ out:
 static void
 start_checkout (SeafRepo *repo, CloneTask *task)
 {
-    if (repo->encrypted && task->passwd != NULL) {
-        if (seaf_repo_manager_set_repo_passwd (seaf->repo_mgr,
-                                               repo,
-                                               task->passwd) < 0) {
-            seaf_warning ("[Clone mgr] failed to set passwd for %s.\n", repo->id);
-            transition_to_error (task, CLONE_ERROR_INTERNAL);
+seaf_warning("TRACE: start_checkout, \n\ttask->cs_random_key= %s\n\ttask->hashed puk =  %s\n\t cs_pin = %s\n",task->cs_random_key, task->hashed_public_key, task->cs_pin);
+seaf_warning("TRACE: start_checkout, \n\trepo->cs_random_key= %s\n\trepo->hashed puk =  %s\n\t cs_pin = %s\n",repo->cs_random_key, repo->hashed_public_key, repo->cs_pin);
+    if (repo->encrypted) {
+        if (task->random_key != NULL && task->random_key[0] != 0 &&
+            task->passwd != NULL) {
+            if (seaf_repo_manager_set_repo_passwd (seaf->repo_mgr,
+                                                   repo,
+                                                   task->passwd) < 0) {
+                seaf_warning ("[Clone mgr] failed to set passwd for %s.\n", repo->id);
+                transition_to_error (task, CLONE_ERROR_INTERNAL);
+                return;
+            }
+        } else if ( task->cs_random_key != NULL && task->cs_random_key[0] != 0 &&
+                    task->hashed_public_key != NULL && task->hashed_public_key[0] != 0 ) {
+            if (seaf_repo_manager_set_repo_cryptostick(seaf->repo_mgr,
+                                                       repo,
+                                                       task->cs_serial_no, task->cs_pin) < 0) {
+                seaf_warning ("[Clone mgr] failed to set cryptostick for %s.\n", repo->id);
+                transition_to_error (task, CLONE_ERROR_INTERNAL);
+                return;
+            }
+        } else {
+            seaf_warning ("[Clone mgr] Password is empty for encrypted repo %s.\n",
+                       repo->id);
+            transition_to_error (task, CLONE_ERROR_PASSWD);
             return;
         }
-    } /*else if (repo->encrypted) {
-        seaf_warning ("[Clone mgr] Password is empty for encrypted repo %s.\n",
-                   repo->id);
-        transition_to_error (task, CLONE_ERROR_PASSWD);
-        return;
-    }*/
+    }
 
     if (g_access (task->worktree, F_OK) != 0 &&
         g_mkdir_with_parents (task->worktree, 0777) < 0) {
@@ -2269,7 +2395,10 @@ on_repo_http_fetched (SeafileSession *seaf,
                                              task->server_url);
     }
 
+seaf_warning("TRACE: on_repo_fetched, \n\trepo->cs_random_key= %s\n\trepo->hashed puk =  %s\n\t repo->cs_pin = %s\n",repo->cs_random_key, repo->hashed_public_key, repo->cs_pin);
+seaf_warning("TRACE: on_repo_fetched, \n\ttask->cs_random_key= %s\n\ttask->hashed puk =  %s\n\t task->cs_pin = %s\n",task->cs_random_key, task->hashed_public_key, task->cs_pin);
     mark_clone_done_v2 (repo, task);
+
 }
 
 static void

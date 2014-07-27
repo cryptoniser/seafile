@@ -51,6 +51,7 @@ struct _SeafRepo {
     // Cryptostick
     gchar       hashed_public_key[65];
     gchar       cs_random_key[513];
+    gchar       *cs_pin;
 
     gboolean    no_local_history;
 
@@ -146,6 +147,9 @@ seaf_repo_index_worktree_files (const char *repo_id,
                                 const char *passwd,
                                 int enc_version,
                                 const char *random_key,
+                                const char *cs_random_key,
+                                const char *cs_serial_no,
+                                const char *cs_pin,
                                 char *root_id);
 
 int
@@ -324,6 +328,13 @@ seaf_repo_manager_invalidate_repo_worktree (SeafRepoManager *mgr,
 void
 seaf_repo_manager_validate_repo_worktree (SeafRepoManager *mgr,
                                           SeafRepo *repo);
+
+int
+seaf_repo_manager_set_repo_cryptostick (SeafRepoManager *manager,
+                                        SeafRepo *repo,
+                                        unsigned char* cs_serial_no,
+                                        unsigned char* cs_pin
+                                        /*, card_t* card */ );
 
 int
 seaf_repo_manager_set_repo_passwd (SeafRepoManager *manager,
