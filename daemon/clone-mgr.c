@@ -2330,6 +2330,8 @@ on_repo_fetched (SeafileSession *seaf,
                                              task->server_url);
     }
 
+seaf_warning("TRACE: on_repo_fetched, \n\trepo->cs_random_key= %s\n\trepo->hashed puk =  %s\n\t repo->cs_pin = %s\n",repo->cs_random_key, repo->hashed_public_key, repo->cs_pin);
+seaf_warning("TRACE: on_repo_fetched, \n\ttask->cs_random_key= %s\n\ttask->hashed puk =  %s\n\t task->cs_pin = %s\n",task->cs_random_key, task->hashed_public_key, task->cs_pin);
     if (!task->server_side_merge)
         start_checkout (repo, task);
     else

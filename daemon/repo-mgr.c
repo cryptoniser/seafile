@@ -1465,6 +1465,7 @@ seaf_repo_index_worktree_files (const char *repo_id,
                                 const char *cs_pin,
                                 char *root_id)
 {
+seaf_warning("((((((________________TRACE:seaf_repo_index_worktree_files \n\t cs_random_key =%s \n\t cs_serial_no = %s\n\t cs_pin = %s\n",cs_random_key, cs_serial_no, cs_pin);
     char index_path[SEAF_PATH_MAX];
     struct index_state istate;
     unsigned char key[32], iv[16];
