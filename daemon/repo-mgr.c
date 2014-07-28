@@ -415,6 +415,8 @@ seaf_repo_from_commit (SeafRepo *repo, SeafCommit *commit)
         else if (repo->enc_version == 2) {
             memcpy (repo->magic, commit->magic, 64);
             memcpy (repo->random_key, commit->random_key, 96);
+            memcpy (repo->cs_random_key, commit->cs_random_key, 512);
+            memcpy (repo->hashed_public_key, commit->hashed_public_key, 64);
         }
     }
     repo->no_local_history = commit->no_local_history;
@@ -434,6 +436,8 @@ seaf_repo_to_commit (SeafRepo *repo, SeafCommit *commit)
         else if (commit->enc_version == 2) {
             commit->magic = g_strdup (repo->magic);
             commit->random_key = g_strdup (repo->random_key);
+            commit->cs_random_key = g_strdup (repo->cs_random_key);
+            commit->hashed_public_key = g_strdup (repo->hashed_public_key);
         }
     }
     commit->no_local_history = repo->no_local_history;
@@ -1459,7 +1463,6 @@ seaf_repo_index_worktree_files (const char *repo_id,
                                 const char *cs_pin,
                                 char *root_id)
 {
-seaf_warning("((((((________________TRACE:seaf_repo_index_worktree_files \n\t cs_random_key =%s \n\t cs_serial_no = %s\n\t cs_pin = %s\n",cs_random_key, cs_serial_no, cs_pin);
     char index_path[SEAF_PATH_MAX];
     struct index_state istate;
     unsigned char key[32], iv[16];
@@ -1478,6 +1481,7 @@ seaf_warning("((((((________________TRACE:seaf_repo_index_worktree_files \n\t cs
 
     if (read_index_from (&istate, index_path, repo_version) < 0) {
         g_warning ("Failed to load index.\n");
+        seaf_warning ("Failed to load index.\n");
         return -1;
     }
 
@@ -1505,7 +1509,6 @@ seaf_warning("((((((________________TRACE:seaf_repo_index_worktree_files \n\t cs
                 csGetSerialNo(currentNode->card, serialNo);
               
                 if ( g_strcmp0((const char*)serialNo, (const char*)cs_serial_no) == 0) {
-                    seaf_warning("---------------------------FOUND IT!YAY!\n\n");
                     matchedNode = currentNode;
                     i=cryptosticks.numOfNodes+1;
                 }
@@ -1515,16 +1518,16 @@ seaf_warning("((((((________________TRACE:seaf_repo_index_worktree_files \n\t cs
             
             // Did not find a match
             if ( i == cryptosticks.numOfNodes ) {
-            seaf_warning("----------------------------------- i == cryptosticks.numOfNodes = %d \n\n", cryptosticks.numOfNodes);
+                seaf_warning("Selected cryptostick not found.\n");
                 return -1;
             }
             
         } else {
             // Requested use of a cryptostick, but zero devices found
+            seaf_warning("No cryptosticks detected\n");
             return -1;
         }
 
-                seaf_warning("---------------------------FOUND IT!YAY!\n\n");
         // Select the card
         selected_card = matchedNode->card;
         
@@ -1568,6 +1571,7 @@ seaf_warning("((((((________________TRACE:seaf_repo_index_worktree_files \n\t cs
     if (it)
         cache_tree_free (&it);
     seaf_repo_free_ignore_files(ignore_list);
+seaf_warning("TRACE: seaf_repo_index_worktree_files RETURN with 0\n");
     return 0;
 
 error:
@@ -1576,6 +1580,7 @@ error:
     if (it)
         cache_tree_free (&it);
     seaf_repo_free_ignore_files(ignore_list);
+seaf_warning("TRACE: seaf_repo_index_worktree_files RETURN with -1\n");
     return -1;
 }
 
@@ -3240,7 +3245,7 @@ int
 seaf_repo_manager_add_repo (SeafRepoManager *manager,
                             SeafRepo *repo)
 {
-seaf_warning("TRACE: seaf_repo_manager_add_repo:\n\t repo->cs_random_key = %s \n\t repo->hashed_public_key\n", repo->cs_random_key, repo->hashed_public_key);
+seaf_warning("TRACE: seaf_repo_manager_add_repo:\n\t repo->cs_random_key = %s \n\t repo->hashed_public_key = %s\n", repo->cs_random_key, repo->hashed_public_key);
     char sql[256];
     sqlite3 *db = manager->priv->db;
 
@@ -4205,7 +4210,6 @@ seaf_warning("------------------------------------------ cs_serial_no = %s, cs_p
             csGetSerialNo(currentNode->card, serialNo);
           
             if ( g_strcmp0((const char*)serialNo, (const char*)cs_serial_no) == 0) {
-                seaf_warning("---------------------------FOUND IT!YAY!\n\n");
                 matchedNode = currentNode;
                 i = cryptosticks.numOfNodes+1;
             }
@@ -4215,7 +4219,7 @@ seaf_warning("------------------------------------------ cs_serial_no = %s, cs_p
         
         // Did not find a match
         if ( i == cryptosticks.numOfNodes ) {
-        seaf_warning("----------------------------------- i == cryptosticks.numOfNodes = %d \n\n", cryptosticks.numOfNodes);
+            seaf_warning("Selected cryptostick not found.\n");
             return -1;
         }
         
@@ -4224,13 +4228,11 @@ seaf_warning("------------------------------------------ cs_serial_no = %s, cs_p
         return -1;
     }
 
-            seaf_warning("---------------------------FOUND IT!YAY!\n\n");
     // Select the card
     selected_card = matchedNode->card;
 
 
     // VERIFY PIN
-    seaf_warning("----------------------------------- PIN: %s\n\n", cs_pin);
     if ((ret = csVerifyPIN(selected_card, cs_pin, strlen(cs_pin))) != 0) {
         seaf_warning("Wrong PIN (cryptostick) %s (len = %d). Error = %d\n", cs_pin, strlen(cs_pin), ret);
         return -1;
