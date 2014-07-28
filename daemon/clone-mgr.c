@@ -658,7 +658,7 @@ static int
 save_task_to_db (SeafCloneManager *mgr, CloneTask *task)
 {
     char *sql;
-
+seaf_warning("DEBUG: save_task_to_db: \n\ttask->hashed_public_key = %s\n",task->hashed_public_key);
     if (task->hashed_public_key) {
         sql = sqlite3_mprintf ("REPLACE INTO CloneTasks VALUES "
             "('%q', '%q', '%q', '%q', '%q', NULL, '%q', '%q', '%q', '%q', '%q', '%q', '%q')",
@@ -693,7 +693,7 @@ save_task_to_db (SeafCloneManager *mgr, CloneTask *task)
 
     if (task->passwd && task->enc_version == 2 && task->random_key) {
         sql = sqlite3_mprintf ("REPLACE INTO CloneEncInfo VALUES "
-                               "('%q', %d, '%q', NULL, NULL)",
+                               "('%q', %d, '%q', NULL, NULL, NULL, NULL)",
                                task->repo_id, task->enc_version, task->random_key);
         if (sqlite_query_exec (mgr->db, sql) < 0) {
             sqlite3_free (sql);
@@ -1278,6 +1278,7 @@ seaf_warning("TRACE: add_task_common, \n\tcs_random_key= %s\n\thashed puk =  %s\
     if (save_task_to_db (mgr, task) < 0) {
         seaf_warning ("[Clone mgr] failed to save task.\n");
         clone_task_free (task);
+seaf_warning("TRACE: add_task_common RETURN with NULL\n");
         return NULL;
     }
 
@@ -1288,7 +1289,9 @@ seaf_warning("TRACE: add_task_common, \n\tcs_random_key= %s\n\thashed puk =  %s\
 
     /* The old task for this repo will be freed. */
     g_hash_table_insert (mgr->tasks, g_strdup(task->repo_id), task);
-
+seaf_warning("DEBUG: add_task_common: \n\t task->cs_random_key = %s \n\t task->hashed_public_key = %s\n",
+                task->cs_random_key, task->hashed_public_key);
+seaf_warning("TRACE: add_task_common RETURN\n");
     return g_strdup(repo_id);
 }
 
@@ -2194,8 +2197,9 @@ out:
 static void
 start_checkout (SeafRepo *repo, CloneTask *task)
 {
-seaf_warning("TRACE: start_checkout, \n\ttask->cs_random_key= %s\n\ttask->hashed puk =  %s\n\t cs_pin = %s\n",task->cs_random_key, task->hashed_public_key, task->cs_pin);
-seaf_warning("TRACE: start_checkout, \n\trepo->cs_random_key= %s\n\trepo->hashed puk =  %s\n\t cs_pin = %s\n",repo->cs_random_key, repo->hashed_public_key, repo->cs_pin);
+seaf_warning("TRACE: start_checkout, \n\trepo->cs_random_key= %s\n\trepo->hashed puk =  %s\n\t repo->cs_pin = %s\n\t task->cs_serial_no\n",
+            repo->cs_random_key, repo->hashed_public_key, repo->cs_pin);
+
     if (repo->encrypted) {
         if (task->random_key != NULL && task->random_key[0] != 0 &&
             task->passwd != NULL) {
