@@ -1281,6 +1281,7 @@ seaf_warning("TRACE: add_task_common RETURN with NULL\n");
         return NULL;
     }
 
+seaf_warning("TRACE: add_task_common: after save_task_to_db\n");
     if (seaf->enable_http_sync && task->repo_version > 0 && task->server_url)
         check_http_protocol (task);
     else
