@@ -7,6 +7,7 @@
 #include <openssl/sha.h>
 #include <openssl/rsa.h>
 #include <openssl/err.h>
+
 #include "cryptostick.h"
 
 #include "utils.h"
@@ -115,28 +116,8 @@ seafile_cryptostick_generate_random_key (const char *modulus,
         RAND_pseudo_bytes (secret_key, sizeof(secret_key));
     }
 
-    // Get public key
-/*    unsigned char* modulus;
-    unsigned char* exponent;
-    size_t modlen, explen;
-    r = csGetPublicKey(card, &modulus, &modlen, &exponent, &explen);                                                                                                                             
-*/
     RSA* rsa = NULL;
-    int encryptedLength = 256;
-    int modlen = 256;
-    unsigned char* n_hex;
-    unsigned char* e_hex;
-    
-/*
-    n_hex = (unsigned char*)malloc(sizeof(unsigned char*)*modlen*2);                                                                                                                             
-    for(i=0;i<modlen;i++)
-        sprintf((char*)(n_hex + (i * 2)), "%02x", modulus[i]);                                                                                                                                   
-*/
-/*
-    e_hex = (unsigned char*)malloc(sizeof(unsigned char*)*explen*2);                                                                                                                             
-    for(i=0;i<explen;i++)
-        sprintf((char*)(e_hex + (i * 2)), "%02x", exponent[i]);                                                                                                                                  
-*/    
+
     ERR_load_crypto_strings();
     rsa = RSA_new();
 
@@ -151,11 +132,15 @@ seafile_cryptostick_generate_random_key (const char *modulus,
     }
     unsigned char random_key_raw[256];
     int enc_length = RSA_public_encrypt(32, secret_key, random_key_raw, rsa, RSA_PKCS1_PADDING);
-    if (enc_length == -1 )
+    if (enc_length == -1 ) {
+        seaf_warning("RSA_public_encrypt failed \n\t random_key = %s\n\t modulus = %s\n\t exponent = %s\n",random_key, modulus, exponent);
         return -1;
+    }
 
     rawdata_to_hex (random_key_raw, random_key, 256);
     random_key[512] = '\0';
+seaf_warning("DEBUG: seafile_cryptostick_generate_random_key: %s\n", random_key);
+    return 0;
 }
 
 void
@@ -180,10 +165,13 @@ seafile_generate_magic (int version, const char *repo_id,
 void
 seafile_hash_public_key(char *public_key, char hashed_public_key[65])
 {
+    char* public_key_raw[256];
+    hex_to_rawdata(public_key, public_key_raw, 512);
+
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
-    SHA256_Update(&sha256, public_key, strlen(public_key));
+    SHA256_Update(&sha256, public_key_raw, 256);
     SHA256_Final(hash, &sha256);
 
     int i;
@@ -236,42 +224,26 @@ seaf_warning("--------------------- cs_random_key = %s \n\n",cs_random_key);
 
     if (enc_version == 2) {   
         
-        unsigned char enc_random_key[256], *dec_random_key;
-        int outlen;
-        SeafileCrypt *crypt;  
+        unsigned char enc_random_key[256], dec_random_key[32];
+//        int outlen;
+//        SeafileCrypt *crypt;  
 
         if (cs_random_key == NULL || cs_random_key[0] == 0) {
             seaf_warning ("Empty random key. (cryptostick) \n");
             return -1;        
         }
 
-        hex_to_rawdata (cs_random_key, enc_random_key, 256);
-        unsigned char* test_serial = (unsigned char*)malloc(sizeof(unsigned char)*6);
+        unsigned char test_serial[9];
         r = csGetSerialNo(card, test_serial);
-        printf("get serial error = %d\n",r);
-        seaf_warning("SERIAL NO:\n");
-        int j=0;
-            for(j=0; j<6 ;j++)
-                seaf_warning("%.2x ", test_serial[j]);
-            printf("\n");
+        seaf_warning("get serial error = %d\n",r);
 
         /* TODO: RSA DECIPHER HERE */
+        hex_to_rawdata (cs_random_key, enc_random_key, 256);
         r= csDecipher(card, enc_random_key, 256, dec_random_key, 32);
         if (r != 0 ) {
             seaf_warning("RSA failed, error = %d\n",r);
             return -1;
         }
-/*
-        crypt = seafile_crypt_new (enc_version, key, iv);
-        if (seafile_decrypt ((char **)&dec_random_key, &outlen,
-                             (char *)enc_random_key, 48,
-                             crypt) < 0) {
-            seaf_warning ("Failed to decrypt random key.\n");
-            g_free (crypt);
-            return -1;
-        }
-        g_free (crypt);
-  */      
 
         seafile_derive_key ((char *)dec_random_key, 32, enc_version,
                                   key, iv);                      
