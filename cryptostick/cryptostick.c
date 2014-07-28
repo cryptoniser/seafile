@@ -64,7 +64,7 @@ int csGetSerialNo(card_t *card, unsigned char serialno[9])
 {
     int i;
     for(i=0;i<4;i++)
-        sprintf( serialno + i*2 ,"%02X", card->serialnr.value[2+i]);
+        sprintf( (char*)(serialno + i*2) ,"%02X", card->serialnr.value[2+i]);
     serialno[8] = '\0';
 
 //    memcpy(serialno, &(card->serialnr.value[2]), 4);
@@ -130,7 +130,7 @@ int csGetPublicKey(card_t *card,
     return 0;
 }
 
-int csVerifyPIN(card_t *card, unsigned char* pin, int pinLength)
+int csVerifyPIN(card_t *card, const char* pin, int pinLength)
 {
     int r;
 
@@ -232,6 +232,7 @@ int csHashPublicKey(card_t *card, unsigned char hashedKey[65])
         sprintf((char*)(hashedKey + (i * 2)), "%02x", hash[i]);
     }
     hashedKey[64] = '\0';
+    return 0;
 }
 
 int csFindCard(unsigned char search_serial_no[9], card_t* card)

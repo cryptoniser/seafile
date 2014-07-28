@@ -27,7 +27,7 @@ int csGetPublicKey(card_t *card,
                     unsigned char** publicModulus, size_t* publicModulusLength,
                     unsigned char** publicExponent, size_t* publicExponentLength);
 
-int csVerifyPIN(card_t *card, unsigned char* pin, int pinLength);
+int csVerifyPIN(card_t *card, const char* pin, int pinLength);
 
 int csDecipher(card_t *card, unsigned char* input, size_t in_length, 
                 unsigned char* output, size_t out_len);
