@@ -55,10 +55,9 @@ struct _CloneTask {
     char                *worktree;
     char                *passwd;
     int                  enc_version;
-    unsigned char       *random_key;
-    unsigned char       *cs_serial_no;
+    char                *random_key;
+    char                *cs_serial_no;
     char                *cs_pin;
-//    card_t              *cryptostick;
     char                *cs_random_key;
     char                *hashed_public_key;
 
