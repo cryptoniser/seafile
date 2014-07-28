@@ -2204,7 +2204,6 @@ create_repo_common (SeafRepoManager *mgr,
             }
         } else { // Cryptostick
             if (!random_key || strlen(random_key) != 512) {
-                seaf_warning ("Bad random key (cryptostick).\n");
                 g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
                              "Bad random key (cryptostick) length = %lu, key= %s", strlen(random_key), random_key);
                 return -1;
@@ -2300,9 +2299,12 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
 
     if (public_key && public_key_exponent) { // Cryptostick
         // hash public key
-        seafile_hash_public_key (public_key, hashed_public_key);
+        seafile_hash_public_key(public_key, hashed_public_key);
         // Generate random_key
-        seafile_cryptostick_generate_random_key(public_key, public_key_exponent, cs_random_key);
+        if( seafile_cryptostick_generate_random_key(public_key, public_key_exponent, cs_random_key) == -1 ) {
+            seaf_warning("DEBUG: seafile_cryptostick_generate_random_key failed\n");
+            goto bad;
+        }
 //        g_set_error(error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,"cs_random_key = %s, public_key = %s, public_key_exp = %s, hashed_public_key = %s", 
 //                                                                cs_random_key, public_key, public_key_exponent, hashed_public_key);
     } else {
