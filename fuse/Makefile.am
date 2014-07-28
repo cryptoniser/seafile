@@ -5,16 +5,29 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/cryptostick \
 	@CCNET_CFLAGS@ \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
 	@ZDB_CFLAGS@ \
 	@FUSE_CFLAGS@ \
+	@PCSCLITE_CFLAGS@ \
 	-Wall
 
 bin_PROGRAMS = seaf-fuse
 
 noinst_HEADERS = seaf-fuse.h seafile-session.h repo-mgr.h
+
+cryptostick_src = \
+    ../cryptostick/errors.c \
+    ../cryptostick/common.c \
+    ../cryptostick/apdu.c \
+    ../cryptostick/iso7816.c \
+    ../cryptostick/openpgp.c \
+    ../cryptostick/card.c \
+    ../cryptostick/pcsc-wrapper.c \
+    ../cryptostick/cryptostick.c
+
 
 seaf_fuse_SOURCES = seaf-fuse.c \
                     seafile-session.c \
@@ -34,13 +47,15 @@ seaf_fuse_SOURCES = seaf-fuse.c \
                     ../common/obj-store.c \
                     ../common/obj-backend-fs.c \
                     ../common/obj-backend-riak.c \
-                    ../common/seafile-crypt.c
+                    ../common/seafile-crypt.c \
+					$(cryptostick_src)
 
 seaf_fuse_LDADD = @CCNET_LIBS@ \
 				  $(top_builddir)/lib/libseafile.la \
 				  @GLIB2_LIBS@ @GOBJECT_LIBS@ @SSL_LIBS@ @LIB_RT@ @LIB_UUID@ \
                   -lsqlite3 @LIBEVENT_LIBS@ \
 				  $(top_builddir)/common/cdc/libcdc.la \
+			      @PCSCLITE_LIBS@ \
 				  @SEARPC_LIBS@ @JANSSON_LIBS@ @ZDB_LIBS@ @FUSE_LIBS@ @ZLIB_LIBS@
 
 seaf_fuse_LDFLAGS = @STATIC_COMPILE@ @SERVER_PKG_RPATH@

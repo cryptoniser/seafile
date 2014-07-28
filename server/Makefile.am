@@ -8,6 +8,7 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/cryptostick \
 	@CCNET_CFLAGS@ \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
@@ -15,9 +16,21 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	@MSVC_CFLAGS@ \
 	@CURL_CFLAGS@ \
 	@LIBARCHIVE_CFLAGS@
+	@PCSCLITE_CFLAGS@ \
 	-Wall
 
 bin_PROGRAMS = seaf-server
+
+cryptostick_src = \
+    ../cryptostick/errors.c \
+    ../cryptostick/common.c \
+    ../cryptostick/apdu.c \
+    ../cryptostick/iso7816.c \
+    ../cryptostick/openpgp.c \
+    ../cryptostick/card.c \
+    ../cryptostick/pcsc-wrapper.c \
+    ../cryptostick/cryptostick.c
+
 
 proc_headers = $(addprefix processors/, \
 	recvfs-proc.h \
@@ -60,6 +73,7 @@ noinst_HEADERS = web-accesstoken-mgr.h chunkserv-mgr.h seafile-session.h \
 	$(proc_headers)
 
 seaf_server_SOURCES = \
+	$(cryptostick_src) \
 	seaf-server.c \
 	web-accesstoken-mgr.c chunkserv-mgr.c seafile-session.c \
 	share-mgr.c \
@@ -115,6 +129,7 @@ seaf_server_SOURCES = \
 	processors/putfs-v2-proc.c
 
 seaf_server_LDADD = @CCNET_LIBS@ \
+	@PCSCLITE_LIBS@ \
 	$(top_builddir)/lib/libseafile_common.la \
 	$(top_builddir)/common/index/libindex.la \
 	@GLIB2_LIBS@ @GOBJECT_LIBS@ @SSL_LIBS@ @LIB_RT@ @LIB_UUID@ -lsqlite3 @LIBEVENT_LIBS@ -levhtp -levent_openssl \

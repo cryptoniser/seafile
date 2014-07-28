@@ -6,6 +6,8 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	-I$(top_srcdir)/common \
+	@PCSCLITE_CFLAGS@ \
+	-I$(top_srcdir)/cryptostick \
 	@CCNET_CFLAGS@ \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
@@ -23,7 +25,19 @@ noinst_HEADERS = \
 	fsck.h \
 	gc-core.h
 
+cryptostick_src = \
+    ../../cryptostick/errors.c \
+    ../../cryptostick/common.c \
+    ../../cryptostick/apdu.c \
+    ../../cryptostick/iso7816.c \
+    ../../cryptostick/openpgp.c \
+    ../../cryptostick/card.c \
+    ../../cryptostick/pcsc-wrapper.c \
+    ../../cryptostick/cryptostick.c
+
+
 common_sources = \
+	$(cryptostick_src) \
 	seafile-session.c \
 	repo-mgr.c \
 	../../common/seaf-db.c \
@@ -46,6 +60,7 @@ seafserv_gc_SOURCES = \
 	$(common_sources)
 
 seafserv_gc_LDADD = @CCNET_LIBS@ \
+	@PCSCLITE_LIBS@ \
 	$(top_builddir)/common/cdc/libcdc.la \
 	$(top_builddir)/lib/libseafile_common.la \
 	@GLIB2_LIBS@ @GOBJECT_LIBS@ @SSL_LIBS@ @LIB_RT@ @LIB_UUID@ -lsqlite3 @LIBEVENT_LIBS@ \
@@ -59,6 +74,7 @@ seaf_fsck_SOURCES = \
 	$(common_sources)
 
 seaf_fsck_LDADD = @CCNET_LIBS@ \
+	@PCSCLITE_LIBS@ \
 	$(top_builddir)/common/cdc/libcdc.la \
 	$(top_builddir)/lib/libseafile_common.la \
 	@GLIB2_LIBS@ @GOBJECT_LIBS@ @SSL_LIBS@ @LIB_RT@ @LIB_UUID@ -lsqlite3 @LIBEVENT_LIBS@ \
@@ -71,6 +87,7 @@ seaf_migrate_SOURCES = \
 	$(common_sources)
 
 seaf_migrate_LDADD = @CCNET_LIBS@ \
+	@PCSCLITE_LIBS@ \
 	$(top_builddir)/common/cdc/libcdc.la \
 	$(top_builddir)/lib/libseafile_common.la \
 	@GLIB2_LIBS@ @GOBJECT_LIBS@ @SSL_LIBS@ @LIB_RT@ @LIB_UUID@ -lsqlite3 @LIBEVENT_LIBS@ \
@@ -85,6 +102,8 @@ seaf_migrate_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	-I$(top_srcdir)/common \
+	@PCSCLITE_CFLAGS@ \
+	-I$(top_srcdir)/cryptostick \
 	@CCNET_CFLAGS@ \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
