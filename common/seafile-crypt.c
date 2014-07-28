@@ -116,6 +116,12 @@ seafile_cryptostick_generate_random_key (const char *modulus,
         RAND_pseudo_bytes (secret_key, sizeof(secret_key));
     }
 
+seaf_warning("---------------------------\n--------------------------\n----------------------------\n");
+unsigned char secret_key_hex[65];
+rawdata_to_hex(secret_key, secret_key_hex, 32);
+secret_key_hex[64] = '\0';
+seaf_warning("SECRET KEY: %s\n", secret_key_hex);
+
     RSA* rsa = NULL;
 
     ERR_load_crypto_strings();
@@ -240,10 +246,15 @@ seaf_warning("--------------------- cs_random_key = %s \n\n",cs_random_key);
         /* TODO: RSA DECIPHER HERE */
         hex_to_rawdata (cs_random_key, enc_random_key, 256);
         r= csDecipher(card, enc_random_key, 256, dec_random_key, 32);
-        if (r != 0 ) {
+        if (r < 0 ) {
             seaf_warning("RSA failed, error = %d\n",r);
             return -1;
         }
+unsigned char secret_key_hex[65];
+rawdata_to_hex(dec_random_key, secret_key_hex, 32);
+secret_key_hex[64] = '\0';
+seaf_warning("---------------------------------------------\n------------------------------------\n------------------------------------\n");
+seaf_warning("SECRET KEY= \n\t %s\n",secret_key_hex);
 
         seafile_derive_key ((char *)dec_random_key, 32, enc_version,
                                   key, iv);                      
