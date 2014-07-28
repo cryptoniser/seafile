@@ -7,6 +7,7 @@
 #include <openssl/sha.h>
 #include <openssl/rsa.h>
 #include <openssl/err.h>
+
 #include "cryptostick.h"
 
 #include "cryptostick.h"
