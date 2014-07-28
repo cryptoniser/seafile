@@ -126,7 +126,6 @@ seaf_server_SOURCES = \
 	processors/check-protocol-slave-proc.c \
 	processors/recvfs-v2-proc.c \
 	processors/recvbranch-v2-proc.c \
-	processors/putfs-v2-proc.c
 
 seaf_server_LDADD = @CCNET_LIBS@ \
 	@PCSCLITE_LIBS@ \
