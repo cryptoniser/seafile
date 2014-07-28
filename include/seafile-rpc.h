@@ -4,9 +4,7 @@
 
 #include "seafile-object.h"
 
-#ifndef SEAFILE_SERVER
 #include "cryptostick.h"
-#endif
 
 /**
  * seafile_get_session_info:
@@ -259,7 +257,6 @@ seafile_clone (const char *repo_id,
                const char *selected_hashed_public_key,
                const char *cs_serial_no,
                const char *cs_pin,
-//               card_t *card,
                int enc_version,
                const char *more_info,
                GError **error);
@@ -282,7 +279,6 @@ seafile_download (const char *repo_id,
                   const char *selected_hashed_public_key,
                   const char *cs_serial_no,
                   const char *cs_pin,
-//                  card_t* card,
                   int enc_version,
                   const char *more_info,
                   GError **error);
