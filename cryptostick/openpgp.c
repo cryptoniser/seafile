@@ -8,6 +8,26 @@
 #include "openpgp.h"
 //#include "asn1.h"
 
+static int
+pgp_get_card_features(card_t *card)
+{
+    struct pgp_priv_data *priv = DRVDATA (card);
+    unsigned char *hist_bytes = card->atr.value; 
+    size_t atr_len = card->atr.len;
+    size_t i = 0;
+
+    while ((i < atr_len) && (hist_bytes[i] != 0x73))
+            i++;
+    if ((hist_bytes[i] == 0x73) && (atr_len > i+3)) { 
+        if (hist_bytes[i+3] & 0x40) {  
+            card->caps |= CARD_CAP_APDU_EXT;
+            priv->ext_caps = priv->ext_caps | EXT_CAP_APDU_EXT;
+        }
+        if (hist_bytes[i+3] & 0x80)    
+            priv->ext_caps = priv->ext_caps | EXT_CAP_CHAINING;
+    }
+    return SC_SUCCESS;
+}
 
 
 /* ABI: initialize driver */
@@ -78,7 +98,7 @@ int pgp_init(card_t *card)
     }  
 */
     /* get card_features from ATR & DOs */
-//    pgp_get_card_features(card);                                                                                                                                                                                                       
+    pgp_get_card_features(card);                                                                                                                                                                                                       
 
     card->flags = CARD_CAP_APDU_EXT;
 
