@@ -1375,7 +1375,7 @@ seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashe
     if (hashed_public_key && strcmp(hashed_public_key, "") != 0) {
         if (!check_cryptostick_encryption_args(cs_random_key, enc_version, error))
             return NULL;
-    } else {
+    }else {
         if (passwd &&
             !check_encryption_args (magic, enc_version, random_key, error))
             return NULL;
