@@ -1227,7 +1227,6 @@ add_task_common (SeafCloneManager *mgr,
                  const char *random_key,
                  const char *cs_serial_no,
                  const char *cs_pin,
-//                 card_t* card,
                  const char *cs_random_key,
                  const char *hashed_public_key,
                  const char *worktree,
@@ -1376,18 +1375,12 @@ seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashe
     if (hashed_public_key && strcmp(hashed_public_key, "") != 0) {
         if (!check_cryptostick_encryption_args(cs_random_key, enc_version, error))
             return NULL;
-    } else {
-        if (passwd &&
-            !check_encryption_args (magic, enc_version, random_key, error))
-            return NULL;
     }
 
-/*
     if (passwd &&
-        !check_encryption_args (magic, enc_version, random_key, error))
-        return NULL;
-*/
-
+        !check_encryption_args (magic, enc_version, random_key, error)) {
+            return NULL;
+    }
     /* After a repo was unsynced, the sync task may still be blocked in the
      * network, so the repo is not actually deleted yet.
      * In this case just return an error to the user.
@@ -1405,6 +1398,7 @@ seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashe
         !check_cryptostick_encryption_args (cs_random_key, enc_version, error) )
         return NULL;
 */
+
     repo = seaf_repo_manager_get_repo (seaf->repo_mgr, repo_id);
 
     if (repo != NULL && repo->head != NULL) {
@@ -1433,23 +1427,6 @@ seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashe
             return NULL;
         }
     }
-
-/*
-    if (passwd &&
-        seafile_verify_repo_passwd(repo_id, passwd, magic, enc_version) < 0) {
-        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL,
-                     "Incorrect password");
-        return NULL;
-    }
-*/
-/*
-    if (hashed_public_key &&
-        g_strcmp0 (hashed_public_key, selected_hashed_public_key) != 0) {
-        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_GENERAL,
-                     "Incorrect cryptostick");
-        return NULL;
-    }
-*/       
 
     if (!seaf_clone_manager_check_worktree_path (mgr, worktree_in, error)) {
         seaf_warning("DEBUG: !seaf_clone_manager_check_worktree_path\n");
@@ -1480,7 +1457,6 @@ seaf_warning("DEBUG: !worktree\n");
                            peer_id, repo_name, token, passwd,
                            enc_version, random_key, 
                            cs_serial_no, cs_pin,
-                           /* card,*/
                            cs_random_key, hashed_public_key,
                            worktree, peer_addr, peer_port, 
                            email, more_info, error);
