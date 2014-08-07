@@ -1491,7 +1491,6 @@ seaf_repo_index_worktree_files (const char *repo_id,
             seaf_warning ("Failed to generate enc key for repo %s.\n", repo_id);
             goto error;
         }
-        crypt = seafile_crypt_new (enc_version, key, iv);
     } else if (cs_random_key != NULL ){
         
         cs_list cryptosticks;
@@ -1540,6 +1539,8 @@ seaf_repo_index_worktree_files (const char *repo_id,
             goto error;
         }
     }
+
+    crypt = seafile_crypt_new (enc_version, key, iv);
 
     ignore_list = seaf_repo_load_ignore_files(worktree);
 
