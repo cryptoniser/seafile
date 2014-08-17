@@ -65,6 +65,7 @@ convert_repo_list (GList *inner_repos)
                           "random_key", r->random_key, 
                           "cs_random_key", r->cs_random_key,
                           "hashed_public_key", r->hashed_public_key,
+                          "cs_serial_no", r->cs_serial_no,
                           NULL);
 
 #ifdef SEAFILE_SERVER
@@ -945,6 +946,7 @@ seafile_get_repo (const char *repo_id, GError **error)
                       "random_key", r->random_key, 
                       "cs_random_key", r->cs_random_key,
                       "hashed_public_key", r->hashed_public_key,
+                      "cs_serial_no", r->cs_serial_no,
                       NULL);
     }
     g_object_set (repo, "store_id", r->store_id, NULL);
@@ -1803,6 +1805,7 @@ seafile_get_orphan_repo_list(GError **error)
                           "random_key", r->random_key, 
                           "cs_random_key", r->cs_random_key,
                           "hashed_public_key", r->hashed_public_key,
+                          "cs_serial_no", r->cs_serial_no,
                           NULL);
 
         ret = g_list_prepend (ret, repo);
@@ -1842,6 +1845,7 @@ seafile_list_owned_repos (const char *email, GError **error)
                           "random_key", r->random_key, 
                           "cs_random_key", r->cs_random_key,
                           "hashed_public_key", r->hashed_public_key,
+                          "cs_serial_no", r->cs_serial_no,
                           NULL);
 
         ret = g_list_prepend (ret, repo);

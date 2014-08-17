@@ -2175,6 +2175,7 @@ create_repo_common (SeafRepoManager *mgr,
                     const char *magic,
                     const char *hashed_public_key,
                     const char *random_key,
+                    const char *cs_serial_no,
                     int enc_version,
                     GError **error)
 {
@@ -2226,6 +2227,7 @@ create_repo_common (SeafRepoManager *mgr,
         } else {
             memcpy (repo->hashed_public_key, hashed_public_key, 64);
             memcpy (repo->cs_random_key, random_key, 512);
+            memcpy (repo->cs_serial_no, cs_serial_no, 8);
         }
     }
 
@@ -2298,6 +2300,7 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
 
     char hashed_public_key[65];
     char cs_random_key[513];
+    char cs_serial_no[9];
 
     if (public_key && public_key_exponent) { // Cryptostick
         // hash public key
@@ -2319,14 +2322,14 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
     int rc;
     if (public_key) {
         rc = create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
-                                 NULL, hashed_public_key, cs_random_key, CURRENT_ENC_VERSION, error);
+                                 NULL, hashed_public_key, cs_random_key, cs_serial_no, CURRENT_ENC_VERSION, error);
     } else {
         if (passwd) {
             rc = create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
-                                     magic, NULL, random_key, CURRENT_ENC_VERSION, error);
+                                     magic, NULL, random_key, NULL, CURRENT_ENC_VERSION, error);
         } else {
             rc = create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
-                                     NULL, NULL, NULL, -1, error);
+                                     NULL, NULL, NULL, NULL, -1, error);
         }
     }
 
@@ -2374,7 +2377,7 @@ seaf_repo_manager_create_enc_repo (SeafRepoManager *mgr,
     }
 
     if (create_repo_common (mgr, repo_id, repo_name, repo_desc, owner_email,
-                            magic, NULL, random_key, enc_version, error) < 0)
+                            magic, NULL, random_key, NULL, enc_version, error) < 0)
         return NULL;
 
     if (seaf_repo_manager_set_repo_owner (mgr, repo_id, owner_email) < 0) {

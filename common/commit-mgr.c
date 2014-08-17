@@ -727,6 +727,7 @@ commit_from_json_object (const char *commit_id, json_t *object)
             return NULL;
         break;
     case 2:
+// TODO:
  /*       if(hashed_pubkey == "" ) {
             if (!magic || strlen(magic) != 64)
                 return NULL;
