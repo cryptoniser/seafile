@@ -397,7 +397,8 @@ seaf_repo_manager_create_new_repo (SeafRepoManager *mgr,
                                    const char *owner_email,
                                    const char *passwd,
                                    const char *public_key,
-                                   const char * public_key_exponent,
+                                   const char *public_key_exponent,
+                                   const char *cs_serial_no,
                                    GError **error);
 
 char *

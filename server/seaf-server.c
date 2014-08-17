@@ -264,7 +264,7 @@ static void start_rpc_service (CcnetClient *client, int cloud_mode)
     searpc_server_register_function ("seafserv-threaded-rpcserver",
                                      seafile_create_repo_cryptostick,
                                      "seafile_create_repo_cryptostick",
-                                     searpc_signature_string__string_string_string_string_string());
+                                     searpc_signature_string__string_string_string_string_string_string());
 
     searpc_server_register_function ("seafserv-threaded-rpcserver",
                                      seafile_create_enc_repo,

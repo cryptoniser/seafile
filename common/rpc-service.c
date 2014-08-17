@@ -2964,6 +2964,7 @@ seafile_create_repo (const char *repo_name,
                                                  passwd,
                                                  NULL,
                                                  NULL, 
+                                                 NULL,
                                                  error);
     return repo_id;
 }
@@ -2974,6 +2975,7 @@ seafile_create_repo_cryptostick (const char *repo_name,
                                  const char *owner_email,
                                  const char *public_key,
                                  const char *pubkey_exponent,
+                                 const char *cs_serial_no,
                                  GError **error)
 {
     if (!repo_name || !repo_desc || !owner_email) {
@@ -2989,6 +2991,7 @@ seafile_create_repo_cryptostick (const char *repo_name,
                                                  NULL, 
                                                  public_key,
                                                  pubkey_exponent,
+                                                 cs_serial_no,
                                                  error);
     return repo_id;
 }
