@@ -417,6 +417,7 @@ seaf_repo_from_commit (SeafRepo *repo, SeafCommit *commit)
             memcpy (repo->random_key, commit->random_key, 96);
             memcpy (repo->cs_random_key, commit->cs_random_key, 512);
             memcpy (repo->hashed_public_key, commit->hashed_public_key, 64);
+            memcpy(repo->cs_serial_no, commit->cs_serial_no ,8);
         }
     }
     repo->no_local_history = commit->no_local_history;
@@ -438,6 +439,7 @@ seaf_repo_to_commit (SeafRepo *repo, SeafCommit *commit)
             commit->random_key = g_strdup (repo->random_key);
             commit->cs_random_key = g_strdup (repo->cs_random_key);
             commit->hashed_public_key = g_strdup (repo->hashed_public_key);
+            commit->cs_serial_no = g_strdup(repo->cs_serial_no);
         }
     }
     commit->no_local_history = repo->no_local_history;
@@ -4187,8 +4189,7 @@ save_repo_enc_info (SeafRepoManager *manager,
 
 int
 seaf_repo_manager_set_repo_cryptostick (SeafRepoManager *manager,
-                                        SeafRepo *repo, unsigned char* cs_serial_no, unsigned char* cs_pin
-                                        /* ,card_t* card */ )
+                                        SeafRepo *repo, unsigned char* cs_serial_no, unsigned char* cs_pin)
 {
 seaf_warning("------------------------------------------ cs_serial_no = %s, cs_pin = %s\n\n",cs_serial_no, cs_pin);
     int ret;

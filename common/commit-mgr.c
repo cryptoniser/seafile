@@ -620,6 +620,7 @@ commit_to_json_object (SeafCommit *commit)
         if (commit->enc_version == 2) {
             json_object_set_string_member (object, "key", commit->random_key);
             json_object_set_string_member (object, "cs_key", commit->cs_random_key);
+            json_object_set_string_member (object, "cs_serial_no", commit->cs_serial_no);
             json_object_set_string_member (object, "hashed_pubkey", commit->hashed_public_key);
         }
     }
@@ -657,6 +658,7 @@ commit_from_json_object (const char *commit_id, json_t *object)
     const char *random_key = NULL;
     const char *cs_random_key = NULL;
     const char *hashed_pubkey = NULL;
+    const char *cs_serial_no = NULL;
     int no_local_history = 0;
     int version = 0;
     int conflict = 0, new_merge = 0;
@@ -689,6 +691,7 @@ commit_from_json_object (const char *commit_id, json_t *object)
     if (enc_version == 2) {
         random_key = json_object_get_string_member (object, "key");
         cs_random_key = json_object_get_string_member (object, "cs_key");
+        cs_serial_no = json_object_get_string_member (object, "cs_serial_no");
         hashed_pubkey = json_object_get_string_member (object, "hashed_pubkey");
     }
 
@@ -769,6 +772,7 @@ commit_from_json_object (const char *commit_id, json_t *object)
             commit->random_key = g_strdup (random_key);
             commit->cs_random_key = g_strdup (cs_random_key);
             commit->hashed_public_key = g_strdup (hashed_pubkey);
+            commit->cs_serial_no = g_strdup (cs_serial_no);
         }
     }
     if (no_local_history)

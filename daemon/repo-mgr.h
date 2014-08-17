@@ -51,6 +51,7 @@ struct _SeafRepo {
     // Cryptostick
     gchar       hashed_public_key[65];
     gchar       cs_random_key[513];
+    gchar       cs_serial_no[8];
     gchar       *cs_pin;
 
     gboolean    no_local_history;
