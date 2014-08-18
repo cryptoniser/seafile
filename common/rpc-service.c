@@ -330,7 +330,6 @@ seaf_warning("TRACE: seafile_clone, \n\tcs_random_key= %s\n\thashed puk =  %s\n"
                                         selected_hashed_public_key, 
                                         cs_serial_no,
                                         cs_pin,
-                                        /*card,*/
                                         worktree,
                                         peer_addr, peer_port,
                                         email, more_info,
@@ -355,7 +354,6 @@ seafile_download (const char *repo_id,
                   const char *selected_hashed_public_key,
                   const char *cs_serial_no,
                   const char *cs_pin,
-//                  card_t* card,
                   int enc_version,
                   const char *more_info,
                   GError **error)
@@ -392,7 +390,6 @@ seafile_download (const char *repo_id,
                                                  selected_hashed_public_key,
                                                  cs_serial_no,
                                                  cs_pin,
-                                                 /* card, */
                                                  wt_parent,
                                                  peer_addr, peer_port,
                                                  email, more_info,
@@ -941,7 +938,7 @@ seafile_get_repo (const char *repo_id, GError **error)
     }
 
     if (r->encrypted && r->enc_version == 2) {
-        g_warning("r->cs_random_key = %s, r->hashedkey = %s\n",r->cs_random_key, r->hashed_public_key);
+        g_warning("r->cs_random_key = %s, r->hashedkey = %s, r->cs_serial_no = %s\n",r->cs_random_key, r->hashed_public_key, r->cs_serial_no);
         g_object_set (repo, 
                       "random_key", r->random_key, 
                       "cs_random_key", r->cs_random_key,
