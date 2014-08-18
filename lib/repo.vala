@@ -40,6 +40,9 @@ public class Repo : Object {
     public string magic { get; set; }
     public int enc_version { get; set; }
     public string random_key { get; set; }
+    public string cs_random_key { get; set; }
+    public string hashed_public_key { get; set; }
+    public string cs_serial_no { get; set; }
 
     public bool worktree_changed { get; set; }
     public bool worktree_invalid { get; set; }
