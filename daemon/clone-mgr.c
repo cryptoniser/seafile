@@ -434,7 +434,7 @@ load_clone_enc_info (CloneTask *task)
     char sql[256];
 
     snprintf (sql, sizeof(sql),
-              "SELECT enc_version, random_key, cs_random_key, hashed_public_key FROM CloneEncInfo WHERE repo_id='%s'",
+              "SELECT enc_version, random_key, cs_random_key, hashed_public_key, cs_serial_no FROM CloneEncInfo WHERE repo_id='%s'",
               task->repo_id);
 
     if (sqlite_foreach_selected_row (task->manager->db, sql,
