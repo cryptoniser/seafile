@@ -2993,6 +2993,44 @@ seafile_create_repo_cryptostick (const char *repo_name,
     return repo_id;
 }
 
+int seafile_set_cs_serial_no (const char* repo_id,
+                              const char* cs_serial_no,
+                              GError **error)
+{
+    SeafRepo *repo = NULL;
+    int ret = 0;
+
+    if (!is_uuid_valid (repo_id)) {
+        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "Invalid repo id");
+        return -1;
+    }
+
+retry:
+    repo = seaf_repo_manager_get_repo (seaf->repo_mgr, repo_id);
+    if (!repo) {
+        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "No such library");
+        return -1;
+    }
+
+    if (!repo->encrypted) {
+        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "Repo not encrypted");
+        return -1;
+    }
+
+    if (repo->enc_version < 2) {
+        g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
+                     "Unsupported enc version");
+        return -1;
+    }
+
+//    memcpy(repo->cs_serial_no, cs_serial_no, 9);
+
+out:
+    seaf_repo_unref (repo);
+
+    return ret;
+}
+
 char *
 seafile_create_enc_repo (const char *repo_id,
                          const char *repo_name,
