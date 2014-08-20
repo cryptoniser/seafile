@@ -399,6 +399,17 @@ def create_repo_cryptostick(name, desc, user, public_key, public_key_exp, cs_ser
         ret = None
     return ret
 
+def seafile_set_cs_serial_no(repo_id, cs_serial_no):
+    """
+    Update repo's cs_serial_no
+    """
+    try:
+        ret = seafserv_threaded_rpc.seafile_set_cs_serial_no(repo_id, cs_serial_no)
+    except SearpcError, e:
+        logger.error(e)
+        ret = None
+    return ret
+
 def remove_repo(repo_id):
     """
     Return true if successfully removed a repo, otherwise false.
