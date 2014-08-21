@@ -794,6 +794,7 @@ seafile_create_repo_cryptostick (const char *repo_name,
 
 int
 seafile_set_cs_serial_no (const char* repo_id,
+                          const char* user,
                           const char* cs_serial_no,
                           GError ** error);
 
