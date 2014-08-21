@@ -75,6 +75,11 @@ class SeafileRpcClient(ccnet.RpcClientBase):
         pass
     create_repo_cryptostick = seafile_create_repo_cryptostick
 
+    @searpc_func("int", ["string", "string", "string"])
+    def seafile_set_cs_serial_no(repo_id, user, cs_serial_no):
+        pass
+    set_cs_serial_no = seafile_set_cs_serial_no
+
     @searpc_func("int", ["string"])
     def seafile_destroy_repo(repo_id):
         pass
@@ -320,6 +325,11 @@ class SeafServerThreadedRpcClient(ccnet.RpcClientBase):
     def seafile_create_repo(name, desc, owner_email, passwd):
         pass
     create_repo = seafile_create_repo
+
+    @searpc_func("int", ["string", "string", "string"])
+    def seafile_set_cs_serial_no(name, user, cs_serial_no):
+        pass
+    set_cs_serial_no = seafile_set_cs_serial_no
 
     @searpc_func("string", ["string", "string", "string", "string", "string", "string"])
     def seafile_create_repo_cryptostick(name, desc, owner_email, public_key, public_key_exponent, cs_serial_no):

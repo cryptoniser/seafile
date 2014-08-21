@@ -51,8 +51,8 @@ class SeafileAPI(object):
         return seafserv_threaded_rpc.create_repo_cryptostick(name, desc, username, public_key, public_key_exp, cs_serial_no)
 
     # update cs_serial_no
-    def seafile_set_cs_serial_no(self, name, cs_serial_no):
-        return seafserv_threaded_rpc.seafile_set_cs_serial_no(name, cs_serial_no)
+    def set_cs_serial_no(self, repo_id, user, cs_serial_no):
+        return seafserv_threaded_rpc.set_cs_serial_no(repo_id, user, cs_serial_no)
 
     def create_enc_repo(self, repo_id, name, desc, username, magic, random_key, enc_version):
         return seafserv_threaded_rpc.create_enc_repo(repo_id, name, desc, username, magic, random_key, enc_version)
