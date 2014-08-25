@@ -3951,7 +3951,7 @@ int seafile_set_cs_serial_no (const char* repo_id,
                               const char* cs_serial_no,
                               GError **error)
 {
-seaf_warning("TRACE: seafile_set_cs_serial_no, repo_id = %s, user = %s, serial# = %s\n", repo_id, user,cs_serial_no);
+    seaf_warning("TRACE: seafile_set_cs_serial_no, repo_id = %s, user = %s, serial# = %s\n", repo_id, user,cs_serial_no);
 
     SeafRepo *repo = NULL;
     char *commit_id;
@@ -3960,20 +3960,20 @@ seaf_warning("TRACE: seafile_set_cs_serial_no, repo_id = %s, user = %s, serial# 
     int ret = 0;
 
     if (!user) {
-seaf_warning("!user\n");
+        seaf_warning("!user\n");
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
                      "No user given");
         return -1;
     }
 
     if (!is_uuid_valid (repo_id)) {
-seaf_warning("!is_uuid_valid\n");
+        seaf_warning("!is_uuid_valid\n");
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "Invalid repo id");
         return -1;
     }
 
     if (!cs_serial_no) {
-seaf_warning("!cs_serial_no\n");
+        seaf_warning("!cs_serial_no\n");
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "No serial number given");
         return -1;
     }
@@ -3986,14 +3986,11 @@ retry:
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "No such library");
         return -1;
     }
-seaf_warning("DEBUG: before repo->encrypted\n");
     if (!repo->encrypted) {
         seaf_warning("!repo->encrypted\n");
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "Repo not encrypted");
         return -1;
     }
-
-seaf_warning("DEBUG: before repo->enc_version %d\n", repo->enc_version);
     if (repo->enc_version < 2) {
         seaf_warning("repo->enc_version < 2\n");
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS,
@@ -4001,14 +3998,14 @@ seaf_warning("DEBUG: before repo->enc_version %d\n", repo->enc_version);
         return -1;
     }
 
+
     if (!repo->head) {
-seaf_warning("!repo->head\n");
-            branch = seaf_branch_manager_get_branch (seaf->branch_mgr,
+        seaf_warning("!repo->head\n");
+        branch = seaf_branch_manager_get_branch (seaf->branch_mgr,
                                             repo->id, "master");
         if (branch != NULL) {
             commit_id = g_strdup (branch->commit_id);
-//            seaf_branch_unref (branch);
-//            seaf_repo_set_head(repo, branch);
+            // seaf_branch_unref (branch);
         } else {
             g_warning ("[repo-mgr] Failed to get repo %s branch master\n",
                        repo_id);
@@ -4022,16 +4019,15 @@ seaf_warning("!repo->head\n");
         commit_id = g_strdup (repo->head->commit_id);
     }
 
+seaf_warning("commit_id = %s\n",commit_id);
+
     /*
      * We only change repo_name or repo_desc, so just copy the head commit
      * and change these two fields.
      */
-    seaf_warning("DEBUG: before seaf_commit_manager_get_commit\n");
-    seaf_warning("DEBUG: repo->id = %s,\n",repo->id);
-    seaf_warning("DEBUG: repo->version = %d,\n", repo->version);
-    parent = seaf_commit_manager_get_commit (seaf->commit_mgr,
-                                             repo->id, repo->version,
-                                             commit_id);
+    parent = seaf_commit_manager_get_commit_compatible (seaf->commit_mgr,
+                                                         repo->id, /*repo->version,*/
+                                                         commit_id);
 
 
     if (!parent) {
@@ -4041,12 +4037,12 @@ seaf_warning("!repo->head\n");
     }
     g_free(commit_id);
 
-    seaf_warning("DEBUG: before seaf_commit_new\n");
     commit = seaf_commit_new (NULL,
                               repo->id,
                               parent->root_id,
                               user,
-                              EMPTY_SHA1,
+                              "9049cfd376b952c841a05fb6de37a5435dd4f3d2",
+//                              EMPTY_SHA1,
                               "Library's Crypto Stick serial number updated",
                               0);
     commit->parent_id = g_strdup(parent->commit_id);
@@ -4055,7 +4051,6 @@ seaf_warning("!repo->head\n");
     g_free (commit->cs_serial_no);
     commit->cs_serial_no = g_strdup(cs_serial_no);
 
-    seaf_warning("DEBUG: before seaf_commit_manager_add_commit\n");
     if (seaf_commit_manager_add_commit (seaf->commit_mgr, commit) < 0) {
         seaf_warning("seaf_commit_manager_add_commit failed\n");
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "seaf_commit_manager_add_commit failed");
@@ -4064,27 +4059,30 @@ seaf_warning("!repo->head\n");
     }
 
     seaf_warning("DEBUG: before seaf_branch_set_commit\n");
+    // seaf_branch_set_commit (repo->head, commit->commit_id);
     seaf_branch_set_commit (branch, commit->commit_id);
     seaf_warning("DEBUG: after seaf_branch_set_commit\n");
+    // ret = seaf_branch_manager_update_branch(seaf->branch_mgr, repo->head);
     ret = seaf_branch_manager_update_branch(seaf->branch_mgr, branch);
     seaf_warning("DEBUG: after seaf_branch_manager_update_branch\n");
-
-    
-
     if (ret<0) {
         seaf_warning("DEBUG: seaf_branch_manager_update_branch failed\n");
+/* 
         seaf_commit_unref (commit);
         seaf_commit_unref (parent);
         seaf_branch_unref (branch);
-        repo = NULL;
-        commit = NULL;
-        parent = NULL;
-        branch = NULL;
+*/
+//        repo = NULL;
+//        commit = NULL;
+//        parent = NULL;
+//        branch = NULL;
         goto retry;
     }
 
     ret = seaf_sync_manager_add_sync_task (seaf->sync_mgr, repo->id, NULL,
                                             NULL, FALSE, error);
+    seaf_warning("after seaf_sync_manager_add_sync_task\n");
+/*
     if (ret<0) {
         seaf_warning("DEBUG: seaf_sync_manager_add_sync_task failed\n");
         seaf_branch_unref (branch);
@@ -4096,31 +4094,19 @@ seaf_warning("!repo->head\n");
         branch = NULL;
         g_set_error (error, SEAFILE_DOMAIN, SEAF_ERR_BAD_ARGS, "seaf_sync_manager_add_sync_task failed");
         ret = -1;
-        goto out;
-    }
-/*    if (seaf_branch_manager_test_and_update_branch (seaf->branch_mgr,
-                                                    repo->head,
-                                                    parent->commit_id) < 0) {
-#ifdef SEAFILE_SERVER
-        seaf_repo_unref (repo);
-#endif
-        seaf_branch_unref (branch);
-        seaf_commit_unref (commit);
-        seaf_commit_unref (parent);
-        repo = NULL;
-        commit = NULL;
-        parent = NULL;
         goto retry;
     }
 */
+
 out:
 #ifdef SEAFILE_SERVER
     seaf_repo_unref (repo);
 #endif
+/*
     seaf_branch_unref (branch);
     seaf_commit_unref (commit);
     seaf_commit_unref (parent);
-
+*/
     return ret;
 }
 
