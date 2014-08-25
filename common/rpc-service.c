@@ -3994,7 +3994,6 @@ retry:
         return -1;
     }
 
-
     /*
      * We only change cs_serial_no, so just copy the head commit
      * and change these two fields.
@@ -4014,7 +4013,8 @@ retry:
                               repo->id,
                               parent->root_id,
                               user,
-                              EMPTY_SHA1,
+                              "9049cfd376b952c841a05fb6de37a5435dd4f3d2",
+//                              EMPTY_SHA1,
                               "Library's Crypto Stick serial number updated",
                               0);
     commit->parent_id = g_strdup(parent->commit_id);
