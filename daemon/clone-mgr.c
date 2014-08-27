@@ -1380,6 +1380,7 @@ seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashe
             !check_encryption_args (magic, enc_version, random_key, error))
             return NULL;
     }
+
     /* After a repo was unsynced, the sync task may still be blocked in the
      * network, so the repo is not actually deleted yet.
      * In this case just return an error to the user.
@@ -1397,6 +1398,7 @@ seaf_warning("TRACE: seaf_clone_manager_add_task, \n\tcs_random_key= %s\n\thashe
         !check_cryptostick_encryption_args (cs_random_key, enc_version, error) )
         return NULL;
 */
+
     repo = seaf_repo_manager_get_repo (seaf->repo_mgr, repo_id);
 
     if (repo != NULL && repo->head != NULL) {
