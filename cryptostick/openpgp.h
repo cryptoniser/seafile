@@ -1,3 +1,7 @@
+/*
+ * This file is based on OpenSC library
+ */
+
 #ifndef OPENPGP_H
 #define OPENPGP_H
 

@@ -1,3 +1,8 @@
+/*
+ * This file is part of OpenSC library
+ * iso7816.h: ISO-7816 defines
+ */
+
 #ifndef ISO7816_H
 #define ISO7816_H
 

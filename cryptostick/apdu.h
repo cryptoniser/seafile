@@ -1,3 +1,7 @@
+/*
+ * This file is based on OpenSC library
+ */
+
 #ifndef APDU_H
 #define APDU_H
 

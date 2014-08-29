@@ -1,3 +1,7 @@
+/*
+ * This file is based on OpenSC library
+ */
+
 #ifndef CS_COMMON_H
 #define CS_COMMON_H
 

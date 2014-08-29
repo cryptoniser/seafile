@@ -1,3 +1,7 @@
+/*
+ * This file is based on OpenSC library
+ */
+
 #ifndef PCSC_WRAPPER_H
 #define PCSC_WRAPPER_H
 
