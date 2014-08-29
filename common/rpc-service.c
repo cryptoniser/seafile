@@ -3946,6 +3946,9 @@ int seafile_authenticate_repo(const char* repo_id, const char* passwd, const cha
 }
 #endif  /* SEAFILE_SERVER */
 
+
+#ifndef SEAFILE_SERVER
+
 int seafile_set_cs_serial_no (const char* repo_id,
                               const char *user,
                               const char* cs_serial_no,
@@ -4047,3 +4050,4 @@ out:
     return ret;
 }
 
+#endif
