@@ -4041,8 +4041,7 @@ retry:
         goto retry;
     }
 
-    ret = seaf_sync_manager_add_sync_task (seaf->sync_mgr, repo->id, NULL,
-                                            NULL, FALSE, error);
+    ret = seaf_sync_manager_add_sync_task (seaf->sync_mgr, repo->id, error);
 
 out:
     seaf_commit_unref (commit);
