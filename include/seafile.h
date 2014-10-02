@@ -4,6 +4,27 @@
 #define SEAFILE_H
 
 char *
+seafile_clone (const char *repo_id,
+               int repo_version,
+               const char *relay_id,
+               const char *repo_name,
+               const char *worktree,
+               const char *token,
+               const char *passwd,
+               const char *magic,
+               const char *peer_addr,
+               const char *peer_port,
+               const char *email,
+               const char *random_key,
+               const char *cs_random_key,
+               const char *hashed_public_key,
+               const char *selected_hashed_public_key,
+               const char *cs_serial_no,
+               const char *cs_pin,
+               int enc_version,
+               GError **error);
+
+char *
 seafile_create_repo (SearpcClient *client,
                      const gchar *name, 
                      const gchar *description,
