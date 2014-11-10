@@ -510,7 +510,7 @@ seafile_decrypt (char **data_out,
                                   crypt->iv);  /* initial vector */
 
     if (ret == DEC_FAILURE) {
-    seaf_warning("DEC_FAILURE\n");
+        seaf_warning("DEC_FAILURE\n");
         return -1;
     }
 
@@ -520,7 +520,7 @@ seafile_decrypt (char **data_out,
 
     if (*data_out == NULL) {
         g_warning ("failed to allocate the output buffer.\n");
-    seaf_warning("failed to allocate the output buffer.\n");
+        seaf_warning("failed to allocate the output buffer.\n");
         goto dec_error;
     }                
 
@@ -534,7 +534,7 @@ seafile_decrypt (char **data_out,
                              in_len);
 
     if (ret == DEC_FAILURE) {
-    seaf_warning("DEC_FAILURE 2\n");
+        seaf_warning("DEC_FAILURE 2\n");
         goto dec_error;
     }
 
