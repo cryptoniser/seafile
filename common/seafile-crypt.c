@@ -8,7 +8,9 @@
 #include <openssl/rsa.h>
 #include <openssl/err.h>
 
+#ifdef SEAFILE_CLIENT
 #include "cryptostick.h"
+#endif /* SEAFILE_CLIENT */
 
 #include "cryptostick.h"
 
@@ -220,6 +222,7 @@ seafile_verify_repo_passwd (const char *repo_id,
         return -1;
 }
 
+#ifdef SEAFILE_CLIENT
 int    
 seafile_decrypt_repo_enc_key_cryptostick (card_t *card, int enc_version,
                                           const char* cs_random_key,     
@@ -268,6 +271,8 @@ seaf_warning("SECRET KEY= \n\t %s\n",secret_key_hex);
 
     return -1;
 }
+
+#endif /* SEAFILE_CLIENT */
 
 int
 seafile_decrypt_repo_enc_key (int enc_version,

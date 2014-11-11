@@ -24,9 +24,9 @@
 #include "seafile-config.h"
 #endif
 
-#ifndef SEAFILE_SERVER
+#ifdef SEAFILE_CLIENT
 #include "cryptostick.h"
-#endif
+#endif /* SEAFILE_CLIENT */
 
 #include "log.h"
 

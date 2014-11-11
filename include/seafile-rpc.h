@@ -4,7 +4,9 @@
 
 #include "seafile-object.h"
 
+#ifdef SEAFILE_CLIENT
 #include "cryptostick.h"
+#endif /* SEAFILE_CLIENT */
 
 /**
  * seafile_get_session_info:

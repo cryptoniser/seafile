@@ -5,7 +5,6 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	-I$(top_srcdir)/common \
-	-I$(top_srcdir)/cryptostick \
 	@CCNET_CFLAGS@ \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
@@ -47,8 +46,7 @@ seaf_fuse_SOURCES = seaf-fuse.c \
                     ../common/obj-store.c \
                     ../common/obj-backend-fs.c \
                     ../common/obj-backend-riak.c \
-                    ../common/seafile-crypt.c \
-					$(cryptostick_src)
+                    ../common/seafile-crypt.c
 
 seaf_fuse_LDADD = @CCNET_LIBS@ \
 				  $(top_builddir)/lib/libseafile.la \

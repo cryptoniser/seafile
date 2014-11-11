@@ -7,7 +7,6 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	-I$(top_builddir)/lib \
 	-I$(top_srcdir)/common \
 	@PCSCLITE_CFLAGS@ \
-	-I$(top_srcdir)/cryptostick \
 	@CCNET_CFLAGS@ \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
@@ -37,7 +36,6 @@ cryptostick_src = \
 
 
 common_sources = \
-	$(cryptostick_src) \
 	seafile-session.c \
 	repo-mgr.c \
 	../../common/seaf-db.c \

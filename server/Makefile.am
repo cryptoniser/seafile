@@ -8,7 +8,6 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	-I$(top_srcdir)/common \
-	-I$(top_srcdir)/cryptostick \
 	@CCNET_CFLAGS@ \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
@@ -73,7 +72,6 @@ noinst_HEADERS = web-accesstoken-mgr.h chunkserv-mgr.h seafile-session.h \
 	$(proc_headers)
 
 seaf_server_SOURCES = \
-	$(cryptostick_src) \
 	seaf-server.c \
 	web-accesstoken-mgr.c chunkserv-mgr.c seafile-session.c \
 	share-mgr.c \
@@ -125,7 +123,7 @@ seaf_server_SOURCES = \
 	processors/putca-proc.c \
 	processors/check-protocol-slave-proc.c \
 	processors/recvfs-v2-proc.c \
-	processors/recvbranch-v2-proc.c \
+	processors/recvbranch-v2-proc.c
 
 seaf_server_LDADD = @CCNET_LIBS@ \
 	@PCSCLITE_LIBS@ \
