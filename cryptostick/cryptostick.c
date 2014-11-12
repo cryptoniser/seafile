@@ -142,6 +142,7 @@ int csVerifyPIN(card_t *card, const char* pin, int pinLength)
     pin_data.pin1.len = pinLength;
     pin_data.pin1.min_length = 6;
     pin_data.pin1.max_length = 32;
+    pin_data.pin1.pad_length = 0;
     pin_data.pin1.encoding = SC_PIN_ENCODING_ASCII;
 
     int tries_left;
