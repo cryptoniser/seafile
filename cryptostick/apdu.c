@@ -27,6 +27,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
+#include "log.h"
+
 #include "cryptostick/cs-common.h"
 #include "apdu.h"
 #include "errors.h"
@@ -241,7 +244,7 @@ void apdu_log(const u8 *data, size_t len, int is_out)
 
     hex_dump(data, len, buf, blen);
 
-    printf("\n%s APDU data [%lu bytes] =====================================\n%s======================================================================\n",
+    seaf_warning("\n%s APDU data [%lu bytes] =====================================\n%s======================================================================\n",
         is_out != 0 ? "Outgoing" : "Incoming", len,
         buf);
     free(buf);
