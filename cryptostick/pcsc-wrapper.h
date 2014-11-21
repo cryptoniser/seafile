@@ -20,7 +20,6 @@ extern "C" {
 
 #include "apdu.h"
 #include "cryptostick/cs-common.h"
-#include "winscard.h"
 
 #define GET_PRIV_DATA(r) ((struct pcsc_private_data *) (r)->drv_data)
 
