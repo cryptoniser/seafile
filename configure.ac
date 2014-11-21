@@ -61,6 +61,7 @@ fi
 # test which sub-component to compile
 
 if test "$bwin32" = true; then
+   AC_DEFINE(OS_WIN, 1, [Define OS_WIN])
    compile_client=yes
    compile_cli=no
    compile_tools=no
@@ -68,6 +69,7 @@ if test "$bwin32" = true; then
 fi
 
 if test "$bmac" = true; then
+   AC_DEFINE(OS_MAC, 1, [Define OS_MAC])
    compile_client=yes
    compile_cli=no
    compile_tools=no
@@ -75,6 +77,7 @@ if test "$bmac" = true; then
 fi
 
 if test "$blinux" = true; then
+   AC_DEFINE(OS_LINUX, 1, [Define OS_LINUX])
    compile_cli=yes
    compile_tools=yes
 
@@ -195,6 +198,7 @@ if test "$bwin32" = true; then
   LIB_SHELL32=-lshell32
   LIB_PSAPI=-lpsapi
   LIB_MAC=
+  LIB_PCSCLITE=
   MSVC_CFLAGS="-D__MSVCRT__ -D__MSVCRT_VERSION__=0x0601"
 elif test "$bmac" = true ; then
   LIB_WS32=
@@ -208,6 +212,7 @@ elif test "$bmac" = true ; then
   LIB_PSAPI=
   MSVC_CFLAGS=
   LIB_MAC="-framework CoreServices"
+  LIB_PCSCLITE="-framework PCSC"
 else
   LIB_WS32=
   LIB_GDI32=
@@ -277,9 +282,11 @@ PKG_CHECK_MODULES(LIBEVENT, [libevent >= $LIBEVENT_REQUIRED])
 AC_SUBST(LIBEVENT_CFLAGS)
 AC_SUBST(LIBEVENT_LIBS)
 
-PKG_CHECK_MODULES(PCSCLITE, [pcsclite >= $PCSCLITE_REQUIRED])
-AC_SUBST(PCSCLITE_CFLAGS)
-AC_SUBST(PCSCLITE_LIBS)
+if test "$blinux" = true; then
+    PKG_CHECK_MODULES(PCSCLITE, [pcsclite >= $PCSCLITE_REQUIRED])
+    AC_SUBST(PCSCLITE_CFLAGS)
+    AC_SUBST(PCSCLITE_LIBS)
+fi
 
 #if test "${compile_client}" = "yes"; then
    PKG_CHECK_MODULES(ZLIB, [zlib >= $ZLIB_REQUIRED])

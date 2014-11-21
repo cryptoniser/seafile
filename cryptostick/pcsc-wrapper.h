@@ -9,6 +9,15 @@
 extern "C" {
 #endif
 
+#include <config.h>
+
+#ifdef OS_LINUX
+#include "winscard.h"
+#elif defined (OS_MAC)
+#include "PCSC/winscard.h"
+#include "PCSC/wintypes.h"
+#endif
+
 #include "apdu.h"
 #include "cryptostick/cs-common.h"
 #include "winscard.h"

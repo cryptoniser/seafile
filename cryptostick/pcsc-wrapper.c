@@ -2,6 +2,8 @@
  * This file is based on OpenSC library
  */
 
+#include <config.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,9 +14,15 @@
 #include <arpa/inet.h>
 #endif 
 
+#ifdef OS_LINUX
+#include "winscard.h"
+#elif defined (OS_MAC)
+#include "PCSC/winscard.h"
+#include "PCSC/wintypes.h"
+#endif
+
 #include "cryptostick/cs-common.h"
 #include "apdu.h"
-#include "winscard.h"
 #include "reader.h"
 #include "pcsc-wrapper.h"
 
