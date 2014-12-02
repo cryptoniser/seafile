@@ -19,12 +19,25 @@
 #elif defined (OS_MAC)
 #include "PCSC/winscard.h"
 #include "PCSC/wintypes.h"
+#elif defined (OS_WIN)
+#include "winscard.h"
 #endif
 
 #include "cryptostick/cs-common.h"
 #include "apdu.h"
 #include "reader.h"
 #include "pcsc-wrapper.h"
+
+
+#ifdef OS_WIN
+static char *pcsc_stringify_error(LONG rv)
+{
+    static char out[20];
+    sprintf_s(out, sizeof(out), "0x%08X", rv);
+
+    return out;
+}
+#endif
 
 static int pcsc_to_opensc_error(LONG rv)
 {

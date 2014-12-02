@@ -13,9 +13,14 @@ extern "C" {
 
 #ifdef OS_LINUX
 #include "winscard.h"
-#elif defined (OS_MAC)
+#elif defined OS_MAC
 #include "PCSC/winscard.h"
 #include "PCSC/wintypes.h"
+#elif defined OS_WIN
+#include "winscard.h"
+#ifndef PCSC_API
+#define PCSC_API
+#endif
 #endif
 
 #include "apdu.h"
