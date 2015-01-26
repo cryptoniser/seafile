@@ -112,12 +112,25 @@ mark_clone_done_v2 (SeafRepo *repo, CloneTask *task)
     seaf_branch_unref (local);
 
     if (repo->encrypted) {
-        if (seaf_repo_manager_set_repo_passwd (seaf->repo_mgr,
-                                               repo,
-                                               task->passwd) < 0) {
-            seaf_warning ("[Clone mgr] failed to set passwd for %s.\n", repo->id);
-            transition_to_error (task, CLONE_ERROR_INTERNAL);
-            return;
+
+        if (task->random_key != NULL && task->random_key[0] != 0 &&
+            task->passwd != NULL) {
+            if (seaf_repo_manager_set_repo_passwd (seaf->repo_mgr,
+                                                   repo,
+                                                   task->passwd) < 0) {
+                seaf_warning ("[Clone mgr] failed to set passwd for %s.\n", repo->id);
+                transition_to_error (task, CLONE_ERROR_INTERNAL);
+                return;
+            }
+        } else if ( task->cs_random_key != NULL && task->cs_random_key[0] != 0 &&
+                    task->hashed_public_key != NULL && task->hashed_public_key[0] != 0 ) {
+            if (seaf_repo_manager_set_repo_cryptostick(seaf->repo_mgr,
+                                                       repo,
+                                                       task->cs_serial_no, task->cs_pin) < 0) {
+                seaf_warning ("[Clone mgr] failed to set cryptostick for %s.\n", repo->id);
+                transition_to_error (task, CLONE_ERROR_INTERNAL);
+                return;
+            }
         }
     }
 
@@ -1462,7 +1475,7 @@ seaf_warning("DEBUG: !worktree\n");
         seaf_repo_manager_remove_repo_ondisk (seaf->repo_mgr, repo_id, FALSE);
 
 
-    ret = add_task_common (mgr, repo, repo_id, repo_version,
+    ret = add_task_common (mgr, repo_id, repo_version,
                            peer_id, repo_name, token, passwd,
                            enc_version, random_key, 
                            cs_serial_no, cs_pin,

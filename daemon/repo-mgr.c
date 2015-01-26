@@ -1531,11 +1531,12 @@ seaf_repo_index_worktree_files (const char *repo_id,
 
         // Select the card
         selected_card = matchedNode->card;
-        
+/*
         if (csVerifyPIN(selected_card, cs_pin, strlen(cs_pin)) != 0) {
             seaf_warning("Wrong PIN (cryptostick) %s (len = %d).\n", cs_pin, strlen(cs_pin));
             goto error;
         }
+*/
         if (seafile_decrypt_repo_enc_key_cryptostick(selected_card, enc_version, cs_random_key, key, iv) < 0 ) {
             seaf_warning("Failed to generate enc key for repo (cryptostick) %s.\n", repo_id);
             goto error;
@@ -2837,10 +2838,69 @@ seaf_repo_fetch_and_checkout (TransferTask *task,
                                        repo->enc_iv);
         } else {
             unsigned char enc_key[32], enc_iv[16];
+
+            if (passwd != NULL) {
+                if (seafile_decrypt_repo_enc_key (remote_head->enc_version,
+                                                  passwd,
+                                                  remote_head->random_key,
+                                                  enc_key,
+                                                  enc_iv) < 0) {
+                    seaf_warning ("Failed to generate enc key for repo %s.\n", repo_id);
+                    goto out; //error;
+                }
+            } else if (remote_head->cs_random_key != NULL && remote_head->cs_serial_no != NULL ){
+                cs_list cryptosticks;
+                cs_list_node* currentNode = NULL;
+                cs_list_node* matchedNode = NULL;
+                card_t* selected_card = NULL;
+                unsigned char serialNo[9];
+                int i=0;
+                if( csListDevices(&cryptosticks) == 0 && cryptosticks.numOfNodes > 0 ) {
+                    cs_list_node* currentNode = cryptosticks.root;
+
+                    // Traverse the cryptostick linked-list to find a matching serial number
+                    for(i=0; i<cryptosticks.numOfNodes; i++)
+                    {
+                        csGetSerialNo(currentNode->card, serialNo);
+                        if ( g_strcmp0((const char*)serialNo, (const char*)remote_head->cs_serial_no) == 0) {
+                            matchedNode = currentNode;
+                            i=cryptosticks.numOfNodes+1;
+                        }
+
+                        currentNode = currentNode->next;
+                    }
+
+                    // Did not find a match
+                    if ( i == cryptosticks.numOfNodes ) {
+                        seaf_warning("Selected cryptostick not found.\n");
+                        return -1;
+                    }
+
+                } else {
+                    // Requested use of a cryptostick, but zero devices found
+                    seaf_warning("No cryptosticks detected\n");
+                    return -1;
+                }
+
+                // Select the card
+                selected_card = matchedNode->card;
+/*
+                if (csVerifyPIN(selected_card, remote_head->cs_pin, strlen(remote_head->cs_pin)) != 0) {
+                    seaf_warning("Wrong PIN (cryptostick) %s (len = %d).\n", remote_head->cs_pin, strlen(remote_head->cs_pin));
+                    goto out;//error;
+                }
+*/
+                if (seafile_decrypt_repo_enc_key_cryptostick(selected_card, remote_head->enc_version, remote_head->cs_random_key, enc_key, enc_iv) < 0 ) {
+                    seaf_warning("Failed to generate enc key for repo (cryptostick) %s.\n", repo_id);
+                    goto out;//error;
+                }
+            }
+/*
             seafile_decrypt_repo_enc_key (remote_head->enc_version,
                                           passwd,
                                           remote_head->random_key,
                                           enc_key, enc_iv);
+*/
             crypt = seafile_crypt_new (remote_head->enc_version,
                                        enc_key, enc_iv);
         }
@@ -4233,12 +4293,13 @@ seaf_warning("------------------------------------------ cs_serial_no = %s, cs_p
     // Select the card
     selected_card = matchedNode->card;
 
-
+/*
     // VERIFY PIN
     if ((ret = csVerifyPIN(selected_card, cs_pin, strlen(cs_pin))) != 0) {
         seaf_warning("Wrong PIN (cryptostick) %s (len = %d). Error = %d\n", cs_pin, strlen(cs_pin), ret);
         return -1;
     }
+*/
     if (seafile_decrypt_repo_enc_key_cryptostick (selected_card, repo->enc_version,
                                           repo->cs_random_key,     
                                           repo->enc_key, repo->enc_iv) < 0)
