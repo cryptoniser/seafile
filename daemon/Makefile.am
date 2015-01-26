@@ -11,7 +11,7 @@ AM_CFLAGS = -DPKGDATADIR=\"$(pkgdatadir)\" \
 	@SEARPC_CFLAGS@ \
 	@GLIB2_CFLAGS@ \
 	@MSVC_CFLAGS@ \
-	@CURL_CFLAGS@
+	@CURL_CFLAGS@ \
 	@PCSCLITE_CFLAGS@ \
 	-Wall
 
